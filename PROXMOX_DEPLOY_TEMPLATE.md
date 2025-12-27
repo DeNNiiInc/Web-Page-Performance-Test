@@ -273,86 +273,93 @@ curl -I http://localhost
 
 ---
 
-## 🔄 Step 6: Setup Auto-Sync (Every 5 Minutes)
-
-### 6.1 Create auto-sync script
-
-```bash
-cat > /var/www/your-app-name/auto-sync.sh << 'EOF'
-#!/bin/bash
-
-set -e
-
-APP_NAME="your-app-name"
-APP_DIR="/var/www/$APP_NAME"
-LOG_FILE="/var/log/$APP_NAME-autosync.log"
-
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
-}
-
-log "========================================="
-log "Starting auto-sync check..."
-
-cd "$APP_DIR" || exit 1
-
-# Fetch latest from remote
-git fetch origin main 2>&1 | tee -a "$LOG_FILE"
-
-# Check if local is behind remote
-LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main)
-
-if [ "$LOCAL" = "$REMOTE" ]; then
-    log "✅ Already up to date. No changes detected."
-    exit 0
-fi
-
-log "🔄 Changes detected! Pulling updates..."
-
-# Pull changes
-git pull origin main 2>&1 | tee -a "$LOG_FILE"
-
-# Install/update dependencies if package.json changed
-if git diff --name-only $LOCAL $REMOTE | grep -q "package.json"; then
-    log "📦 package.json changed. Running npm install..."
-    npm install 2>&1 | tee -a "$LOG_FILE"
-fi
-
-# Restart the service
-log "🔄 Restarting $APP_NAME service..."
-systemctl restart "$APP_NAME" 2>&1 | tee -a "$LOG_FILE"
-
-# Wait and check status
-sleep 2
-if systemctl is-active --quiet "$APP_NAME"; then
-    log "✅ Service restarted successfully!"
-else
-    log "❌ WARNING: Service may have failed to start!"
-    systemctl status "$APP_NAME" --no-pager 2>&1 | tee -a "$LOG_FILE"
-fi
-
-log "✅ Auto-sync completed!"
-log "========================================="
-EOF
-
-# Make executable
-chmod +x /var/www/your-app-name/auto-sync.sh
-
-# Create log file
-touch /var/log/your-app-name-autosync.log
-chmod 644 /var/log/your-app-name-autosync.log
-```
-
-### 6.2 Add to crontab
-
-```bash
-# Add cron job (every 5 minutes)
-echo "*/5 * * * * cd /var/www/your-app-name && /bin/bash auto-sync.sh" | crontab -
-
-# Verify it was added
-crontab -l
-```
+## 🔄 Step 6: Setup Auto-Sync (Every 30 Seconds)
+ 
+ We use **Systemd Timers** instead of Cron because they support sub-minute intervals and prevent overlapping execution.
+ 
+ ### 6.1 Create robust auto-sync script
+ 
+ ```bash
+ cat > /var/www/your-app-name/auto-sync.sh << 'EOF'
+ #!/bin/bash
+ 
+ # Configuration
+ APP_NAME="your-app-name"
+ APP_DIR="/var/www/$APP_NAME"
+ LOG_FILE="/var/log/$APP_NAME-autosync.log"
+ LOCK_FILE="/var/lock/$APP_NAME-sync.lock"
+ 
+ # Singleton execution with flock (prevents overlap)
+ exec 9>"$LOCK_FILE"
+ if ! flock -n 9; then
+     exit 0
+ fi
+ 
+ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"; }
+ 
+ cd "$APP_DIR" || exit 1
+ 
+ # Fetch and check
+ if ! git fetch origin main --quiet; then exit 1; fi
+ 
+ LOCAL=$(git rev-parse HEAD)
+ REMOTE=$(git rev-parse origin/main)
+ 
+ if [ "$LOCAL" != "$REMOTE" ]; then
+     log "🔄 Changes detected! Pulling..."
+     git pull origin main >> "$LOG_FILE" 2>&1
+     
+     if git diff --name-only "$LOCAL" "$REMOTE" | grep -q "package.json"; then
+         log "📦 package.json changed. Installing dependencies..."
+         npm install --production >> "$LOG_FILE" 2>&1 || exit 1
+     fi
+     
+     log "🔄 Restarting service..."
+     systemctl restart "$APP_NAME"
+     log "✅ Sync complete."
+ fi
+ EOF
+ 
+ chmod +x /var/www/your-app-name/auto-sync.sh
+ ```
+ 
+ ### 6.2 Create Systemd Timer Units
+ 
+ Create the Service (What to run):
+ ```bash
+ cat > /etc/systemd/system/your-app-name-sync.service << 'EOF'
+ [Unit]
+ Description=Auto-sync Service
+ [Service]
+ Type=oneshot
+ ExecStart=/var/www/your-app-name/auto-sync.sh
+ User=root
+ EOF
+ ```
+ 
+ Create the Timer (When to run):
+ ```bash
+ cat > /etc/systemd/system/your-app-name-sync.timer << 'EOF'
+ [Unit]
+ Description=Run auto-sync every 30 seconds
+ 
+ [Timer]
+ OnBootSec=1min
+ OnUnitActiveSec=30s
+ Unit=your-app-name-sync.service
+ 
+ [Install]
+ WantedBy=timers.target
+ EOF
+ ```
+ 
+ ### 6.3 Enable the Timer
+ 
+ ```bash
+ systemctl daemon-reload
+ systemctl enable --now your-app-name-sync.timer
+ systemctl list-timers --all
+ ```
 
 ---
 

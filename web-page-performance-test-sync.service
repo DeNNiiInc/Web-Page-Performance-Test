@@ -1,0 +1,10 @@
+[Unit]
+Description=Auto-sync Web Page Performance Test from GitHub
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/web-page-performance-test/auto-sync.sh
+User=root
+StandardOutput=append:/var/log/web-page-performance-test-autosync.log
+StandardError=append:/var/log/web-page-performance-test-autosync.log

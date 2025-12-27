@@ -1,0 +1,10 @@
+[Unit]
+Description=Run auto-sync every 30 seconds
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=30s
+Unit=web-page-performance-test-sync.service
+
+[Install]
+WantedBy=timers.target
