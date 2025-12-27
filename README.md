@@ -4,7 +4,7 @@
 
 A modern, high-performance web analytics tool that allows users to run Google Lighthouse audits on any website. Built with Node.js, Express, and a custom-tuned Chrome instance for accurate, reproducible results.
 
-**🚀 Live Demo**: [https://web-page-performance-test.beyondcloud.technology/](https://web-page-performance-test.beyondcloud.technology/)
+## 🚀 LIVE DEMO: [web-page-performance-test.beyondcloud.technology](https://web-page-performance-test.beyondcloud.technology/)
 
 ---
 
