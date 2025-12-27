@@ -5,6 +5,7 @@
 
 let currentHarData = null;
 let currentFilter = 'all';
+let currentSort = 'time-desc'; // Default: slowest to fastest
 
 // Load HAR data from URL parameter
 async function init() {
@@ -47,6 +48,9 @@ function renderWaterfall() {
     const filteredEntries = currentFilter === 'all' 
         ? entries 
         : entries.filter(e => e.resourceType === currentFilter);
+    
+    // Sort entries based on current sort
+    sortEntries(filteredEntries);
     
     let html = '';
     
@@ -110,6 +114,32 @@ function getResourceTypeBadge(type) {
         'Fetch': 'API'
     };
     return badges[type] || 'OTHER';
+}
+
+function sortEntries(entries) {
+    switch(currentSort) {
+        case 'time-desc': // Slowest to fastest
+            entries.sort((a, b) => b.timing.total - a.timing.total);
+            break;
+        case 'time-asc': // Fastest to slowest
+            entries.sort((a, b) => a.timing.total - b.timing.total);
+            break;
+        case 'size-desc': // Largest to smallest
+            entries.sort((a, b) => b.size.transferSize - a.size.transferSize);
+            break;
+        case 'size-asc': // Smallest to largest
+            entries.sort((a, b) => a.size.transferSize - b.size.transferSize);
+            break;
+        case 'name-asc': // A to Z
+            entries.sort((a, b) => a.url.localeCompare(b.url));
+            break;
+        case 'name-desc': // Z to A
+            entries.sort((a, b) => b.url.localeCompare(a.url));
+            break;
+        case 'sequence': // Original sequence
+            entries.sort((a, b) => a.requestId - b.requestId);
+            break;
+    }
 }
 
 function renderTimingBars(timing, scale) {
@@ -239,6 +269,12 @@ function setupEventListeners() {
             currentFilter = btn.dataset.type;
             renderWaterfall();
         });
+    });
+    
+    // Sort dropdown
+    document.getElementById('sortSelect').addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderWaterfall();
     });
     
     // Close dialog

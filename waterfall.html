@@ -253,13 +253,28 @@
     <div class="waterfall-container">
         <h1>Request Waterfall</h1>
         
-        <div class="filter-controls" id="filterControls">
-            <button class="filter-btn active" data-type="all">All</button>
-            <button class="filter-btn" data-type="Document">HTML</button>
-            <button class="filter-btn" data-type="Script">JS</button>
-            <button class="filter-btn" data-type="Stylesheet">CSS</button>
-            <button class="filter-btn" data-type="Image">Images</button>
-            <button class="filter-btn" data-type="Font">Fonts</button>
+        <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem; align-items: center;">
+            <div class="filter-controls" id="filterControls">
+                <button class="filter-btn active" data-type="all">All</button>
+                <button class="filter-btn" data-type="Document">HTML</button>
+                <button class="filter-btn" data-type="Script">JS</button>
+                <button class="filter-btn" data-type="Stylesheet">CSS</button>
+                <button class="filter-btn" data-type="Image">Images</button>
+                <button class="filter-btn" data-type="Font">Fonts</button>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="sortSelect" style="color: var(--color-text-secondary); font-size: 0.9rem;">Sort:</label>
+                <select id="sortSelect" style="padding: 0.5rem; border-radius: 6px; background: var(--color-bg-secondary); color: var(--color-text-primary); border: 2px solid var(--color-border); cursor: pointer;">
+                    <option value="time-desc">Slowest → Fastest</option>
+                    <option value="time-asc">Fastest → Slowest</option>
+                    <option value="size-desc">Largest → Smallest</option>
+                    <option value="size-asc">Smallest → Largest</option>
+                    <option value="name-asc">Name (A → Z)</option>
+                    <option value="name-desc">Name (Z → A)</option>
+                    <option value="sequence">Original Sequence</option>
+                </select>
+            </div>
         </div>
         
         <div class="waterfall-canvas" id="waterfallCanvas"></div>
