@@ -38,6 +38,7 @@ async function runTest() {
     console.log('Run Test triggered');
     const urlInput = document.getElementById('test-url');
     const url = urlInput.value.trim();
+    const captureFilmstrip = document.getElementById('capture-filmstrip')?.checked || false;
     const errorMsg = document.getElementById('error-msg');
     const resultsArea = document.getElementById('results-area');
 
@@ -67,7 +68,9 @@ async function runTest() {
             },
             body: JSON.stringify({ 
                 url: url,
-                isMobile: currentDevice === 'mobile'
+                url: url,
+                isMobile: currentDevice === 'mobile',
+                captureFilmstrip: captureFilmstrip
             })
         });
 
@@ -88,11 +91,53 @@ async function runTest() {
 function displayResults(data) {
     const resultsArea = document.getElementById('results-area');
     
-    // Update Metrics
-    updateMetric('score-perf', Math.round(data.scores.performance), true);
-    updateMetric('metric-lcp', Math.round(data.metrics.lcp));
-    updateMetric('metric-cls', data.metrics.cls.toFixed(3));
-    updateMetric('metric-tbt', Math.round(data.metrics.tbt));
+    // Calculate grades using grades.js if available, otherwise simplified logic
+    let overallGrade = 'F';
+    let structureScore = 50;
+    
+    if (typeof calculateAllGrades === 'function') {
+        // Assume grades.js available
+        const grades = calculateAllGrades(data.metrics);
+        // Map average score to grade? Simplified:
+        // Use Performance Score as primary grade driver
+    }
+    
+    const perfScore = Math.round(data.scores.performance);
+    overallGrade = perfScore >= 90 ? 'A' : perfScore >= 80 ? 'B' : perfScore >= 70 ? 'C' : perfScore >= 60 ? 'D' : 'F';
+    
+    // Structure Score (Average of non-perf categories)
+    structureScore = Math.round((
+        (data.scores.seo || 0) + 
+        (data.scores.bestPractices || data.scores['best-practices'] || 0) + 
+        (data.scores.accessibility || 0)
+    ) / 3);
+
+    // Update Dashboard UI
+    const gradeCircle = document.getElementById('overall-grade');
+    const gradeLetter = gradeCircle.querySelector('.grade-letter');
+    
+    // Animate Grade
+    gradeLetter.textContent = overallGrade;
+    gradeCircle.className = 'grade-circle grade-' + overallGrade.toLowerCase();
+    
+    document.getElementById('performance-score').textContent = perfScore + '%';
+    document.getElementById('structure-score').textContent = structureScore + '%';
+    
+    // Web Vitals
+    const lcpVal = data.metrics.lcp < 1000 ? (data.metrics.lcp/1000).toFixed(2) + 's' : Math.round(data.metrics.lcp) + 'ms';
+    const tbtVal = Math.round(data.metrics.tbt) + 'ms';
+    const clsVal = data.metrics.cls.toFixed(2);
+    
+    document.getElementById('vital-lcp').textContent = lcpVal;
+    document.getElementById('vital-tbt').textContent = tbtVal;
+    document.getElementById('vital-cls').textContent = clsVal;
+
+    // Display Filmstrip
+    if (data.filmstrip && data.filmstrip.length > 0) {
+        displayFilmstrip(data.filmstrip);
+    } else {
+        document.getElementById('filmstrip-section').style.display = 'none';
+    }
 
     // Remove existing actions if any
     const existingActions = resultsArea.querySelector('.report-actions');
@@ -141,16 +186,20 @@ function displayResults(data) {
     resultsArea.scrollIntoView({ behavior: 'smooth' });
 }
 
-function updateMetric(id, value, isScore = false) {
-    const el = document.getElementById(id);
-    el.textContent = value;
+function displayFilmstrip(items) {
+    const section = document.getElementById('filmstrip-section');
+    const container = document.getElementById('filmstrip-container');
+    section.style.display = 'block';
     
-    if (isScore) {
-        el.className = 'metric-value'; // Reset
-        if (value >= 90) el.classList.add('score-good');
-        else if (value >= 50) el.classList.add('score-average');
-        else el.classList.add('score-poor');
-    }
+    // Filter/Sample items if too many
+    const frames = items; 
+    
+    container.innerHTML = frames.map(frame => `
+        <div class="filmstrip-frame">
+            <img src="${frame.data}" alt="Timestamp: ${frame.timing}ms">
+            <div class="frame-time">${(frame.timing / 1000).toFixed(1)}s</div>
+        </div>
+    `).join('');
 }
 
 function showError(msg) {
