@@ -138,6 +138,34 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// API Endpoint: Traceroute
+app.get("/api/traceroute", (req, res) => {
+  const { host } = req.query;
+  if (!host) return res.status(400).json({ error: "Host required" });
+
+  // Sanitize host to prevent injection (basic)
+  if (/[^a-zA-Z0-9.-]/.test(host)) return res.status(400).json({ error: "Invalid host" });
+
+  const cmd = process.platform === 'win32' ? `tracert -h 10 ${host}` : `traceroute -m 10 ${host}`;
+  exec(cmd, (error, stdout, stderr) => {
+    res.json({ output: stdout || stderr });
+  });
+});
+
+// API Endpoint: Bulk Test
+app.post("/api/bulk-test", async (req, res) => {
+    const { urls, isMobile, runCount = 1 } = req.body;
+    if (!urls || !Array.isArray(urls)) return res.status(400).json({ error: "URLs array required" });
+
+    // Mock response - in real world would queue these
+    // For now, we'll just acknowledge receipt. To implement fully requires a job queue.
+    // Let's implement a simple "Sequence" runner on the backend? No, that might timeout.
+    // Better to let frontend orchestrate or return a "Batch ID".
+    
+    // We will assume frontend orchestration for simplicity in this Node.js (non-queue) env
+    res.json({ message: "Bulk test ready", count: urls.length });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📁 Serving files from: ${__dirname}`);

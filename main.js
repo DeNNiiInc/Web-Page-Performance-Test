@@ -161,9 +161,9 @@ function displayResults(data) {
             e.preventDefault();
             window.open(`/waterfall.html?id=${data.id}`, '_blank');
         };
-        document.getElementById('view-images').onclick = (e) => {
+        document.getElementById('view-video').onclick = (e) => {
             e.preventDefault();
-            window.open(`/images.html?id=${data.id}`, '_blank');
+            openVideoModal(data.filmstrip);
         };
     }
     
@@ -543,6 +543,70 @@ async function loadOptimizations(testId) {
     }
 }
 
+// Video Player State
+let videoFrames = [];
+let isPlaying = false;
+let currentFrameIndex = 0;
+let videoInterval = null;
+
+function openVideoModal(frames) {
+    if (!frames || frames.length === 0) return;
+    
+    videoFrames = frames;
+    currentFrameIndex = 0;
+    isPlaying = false;
+    
+    document.getElementById('video-modal').style.display = 'block';
+    updateVideoFrame();
+}
+
+function closeVideoModal() {
+    stopVideo();
+    document.getElementById('video-modal').style.display = 'none';
+}
+
+function toggleVideoPlay() {
+    if (isPlaying) {
+        stopVideo();
+    } else {
+        playVideo();
+    }
+}
+
+function playVideo() {
+    if (isPlaying) return;
+    isPlaying = true;
+    document.getElementById('video-play-btn').textContent = '⏸ Pause';
+    
+    if (currentFrameIndex >= videoFrames.length - 1) {
+        currentFrameIndex = 0;
+    }
+    
+    videoInterval = setInterval(() => {
+        currentFrameIndex++;
+        if (currentFrameIndex >= videoFrames.length) {
+            stopVideo();
+            return;
+        }
+        updateVideoFrame();
+    }, 100); // 10fps
+}
+
+function stopVideo() {
+    isPlaying = false;
+    document.getElementById('video-play-btn').textContent = '▶ Play';
+    if (videoInterval) clearInterval(videoInterval);
+}
+
+function updateVideoFrame() {
+    const frame = videoFrames[currentFrameIndex];
+    document.getElementById('video-img').src = frame.data;
+    document.getElementById('video-time').textContent = (frame.timing / 1000).toFixed(1) + 's';
+    
+    const progress = ((currentFrameIndex + 1) / videoFrames.length) * 100;
+    document.getElementById('video-progress-fill').style.width = `${progress}%`;
+}
+
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -565,3 +629,78 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-refresh Git badge
     setInterval(updateVersionBadge, 5 * 60 * 1000);
 });
+
+// ============================================================================
+// Extra Features (Diagnostics & Bulk)
+// ============================================================================
+
+function toggleSection(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function runTraceroute() {
+    const host = document.getElementById('trace-host').value;
+    const out = document.getElementById('trace-output');
+    
+    if (!host) return;
+    
+    out.style.display = 'block';
+    out.textContent = 'Running traceroute...';
+    
+    try {
+        const res = await fetch(`/api/traceroute?host=${host}`);
+        const data = await res.json();
+        out.textContent = data.output;
+    } catch (e) {
+        out.textContent = 'Error: ' + e.message;
+    }
+}
+
+async function runBulkTest() {
+    const text = document.getElementById('bulk-urls').value;
+    const urls = text.split('\n').map(u => u.trim()).filter(u => u);
+    
+    if (urls.length === 0) {
+        alert('No URLs provided');
+        return;
+    }
+    
+    const progress = document.getElementById('bulk-progress');
+    progress.innerHTML = `Starting batch of ${urls.length} tests...`;
+    
+    // Simple Frontend orchestration
+    for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        progress.innerHTML += `<div style="margin-top: 0.5rem">Testing ${url} (${i+1}/${urls.length})...</div>`;
+        
+        try {
+            // Re-use existing runTest API
+            // Note: We need a way to reuse the run logic without clicking buttons
+            // Manually calling fetch here duplicating runTest logic for simplicity
+            const response = await fetch('/api/run-test', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-uuid': getUserUuid()
+                },
+                body: JSON.stringify({ 
+                    url: url,
+                    isMobile: currentDevice === 'mobile',
+                    captureFilmstrip: false // Disable filmstrip for bulk to save speed? Or keep it?
+                })
+            });
+            
+            if (response.ok) {
+                 progress.innerHTML += `<div style="color: #4CAF50">✅ Complete</div>`;
+            } else {
+                 progress.innerHTML += `<div style="color: #F44336">❌ Failed</div>`;
+            }
+        } catch (e) {
+             progress.innerHTML += `<div style="color: #F44336">❌ Error: ${e.message}</div>`;
+        }
+    }
+    
+    progress.innerHTML += '<br><strong>Batch Completed!</strong>';
+    loadHistory(); // Refresh list
+}
