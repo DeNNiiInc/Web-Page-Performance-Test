@@ -199,7 +199,11 @@ async function loadHistory() {
                     <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
                         <input type="checkbox" class="compare-checkbox" data-test-id="${test.id}" style="width: 20px; height: 20px; cursor: pointer;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 0.9rem">${test.url}</div>
+                            <div style="font-weight: 600; font-size: 0.9rem">
+                                <a href="#" class="history-url-link" data-test-id="${test.id}" style="color: var(--color-accent); text-decoration: none; cursor: pointer;" title="Click to reload test results">
+                                    ${test.url}
+                                </a>
+                            </div>
                             <div style="font-size: 0.75rem; color: var(--color-text-muted)">
                                 ${date} • ${test.isMobile ? '📱 Mobile' : '💻 Desktop'}
                             </div>
@@ -223,9 +227,35 @@ async function loadHistory() {
         
         // Setup comparison functionality
         setupComparisonControls();
+        
+        // Setup click handlers for history URLs
+        document.querySelectorAll('.history-url-link').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const testId = e.target.dataset.testId;
+                await loadTestById(testId);
+            });
+        });
 
     } catch (error) {
         console.error('Failed to load history', error);
+    }
+}
+
+// Load and display a test by ID
+async function loadTestById(testId) {
+    try {
+        const response = await fetch(`/reports/${testId}.json`);
+        if (!response.ok) throw new Error('Test not found');
+        
+        const data = await response.json();
+        displayResults(data);
+        
+        // Scroll to results
+        document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        console.error('Failed to load test:', error);
+        alert('Could not load test results. The test may have been deleted.');
     }
 }
 
