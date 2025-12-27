@@ -37,7 +37,7 @@ app.get("/api/git-info", (req, res) => {
 
 // API Endpoint: Run Test (supports multi-run)
 app.post("/api/run-test", async (req, res) => {
-  const { url, isMobile, runs = 1 } = req.body;
+  const { url, isMobile, runs = 1, captureFilmstrip = false } = req.body;
   const userUuid = req.headers['x-user-uuid'];
   const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
@@ -51,7 +51,7 @@ app.post("/api/run-test", async (req, res) => {
   try {
     // Single run (original behavior)
     if (runs === 1) {
-      const result = await runner.runTest(url, { isMobile, userUuid, userIp });
+      const result = await runner.runTest(url, { isMobile, userUuid, userIp, captureFilmstrip });
       return res.json(result);
     }
     
@@ -60,13 +60,13 @@ app.post("/api/run-test", async (req, res) => {
     const suiteId = runner.generateTestId();
     
     // Create suite record
-    await multiRun.createSuite(suiteId, userUuid, url, isMobile ? 'mobile' : 'desktop', runs);
+    await multiRun.createSuite(suiteId, userUuid, url, isMobile ? 'mobile' : 'desktop', runs, captureFilmstrip);
     
     // Return suite ID immediately
     res.json({ suiteId, runs, status: 'running' });
     
     // Execute runs asynchronously
-    multiRun.executeMultipleRuns(suiteId, url, isMobile, runs, userUuid, userIp)
+    multiRun.executeMultipleRuns(suiteId, url, isMobile, runs, userUuid, userIp, captureFilmstrip)
       .catch(error => console.error('Multi-run execution failed:', error));
       
   } catch (error) {
