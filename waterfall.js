@@ -415,6 +415,24 @@ function showRequestDetails(requestId) {
                 <span class="detail-value">${(entry.size.compressionRatio * 100).toFixed(1)}% (${formatBytes(entry.size.resourceSize - entry.size.transferSize)} saved)</span>
             </div>` : ''}
         </div>
+        
+        <div class="detail-section">
+            <h3 onclick="toggleHeaderSection('request-headers')" style="cursor: pointer; user-select: none;">
+                Request Headers <span id="request-headers-icon">▼</span>
+            </h3>
+            <div id="request-headers-content" class="headers-content" style="display: none;">
+                ${formatHeaders(entry.requestHeaders)}
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h3 onclick="toggleHeaderSection('response-headers')" style="cursor: pointer; user-select: none;">
+                Response Headers <span id="response-headers-icon">▼</span>
+            </h3>
+            <div id="response-headers-content" class="headers-content" style="display: none;">
+                ${formatHeaders(entry.responseHeaders)}
+            </div>
+        </div>
     `;
     
     document.getElementById('dialogContent').innerHTML = content;
@@ -461,6 +479,37 @@ function formatBytes(bytes) {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatHeaders(headers) {
+    if (!headers || Object.keys(headers).length === 0) {
+        return '<p style="color: var(--color-text-secondary); font-style: italic;">No headers available</p>';
+    }
+    
+    let html = '<div class="headers-list">';
+    Object.entries(headers).forEach(([key, value]) => {
+        html += `
+            <div class="header-row">
+                <span class="header-key">${key}:</span>
+                <span class="header-value">${value}</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
+
+function toggleHeaderSection(sectionId) {
+    const content = document.getElementById(`${sectionId}-content`);
+    const icon = document.getElementById(`${sectionId}-icon`);
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+    }
 }
 
 // Initialize on page load
