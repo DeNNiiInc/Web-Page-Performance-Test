@@ -62,6 +62,38 @@ app.get("/api/history", async (req, res) => {
   res.json(history);
 });
 
+// API Endpoint: Export HAR
+app.get("/api/export/:testId/har", (req, res) => {
+  const { testId } = req.params;
+  const harPath = path.join(__dirname, 'reports', `${testId}.har.json`);
+  
+  if (!fs.existsSync(harPath)) {
+    return res.status(404).json({ error: "HAR file not found" });
+  }
+  
+  res.download(harPath, `test-${testId}.har`, (err) => {
+    if (err) console.error("Download error:", err);
+  });
+});
+
+// API Endpoint: Export CSV
+app.get("/api/export/:testId/csv", (req, res) => {
+  const { testId } = req.params;
+  const jsonPath = path.join(__dirname, 'reports', `${testId}.json`);
+  
+  if (!fs.existsSync(jsonPath)) {
+    return res.status(404).json({ error: "Test results not found" });
+  }
+  
+  const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const csv = `URL,Timestamp,Device,Performance,Accessibility,Best Practices,SEO,LCP,CLS,TBT
+${data.url},${data.timestamp},${data.isMobile ? 'Mobile' : 'Desktop'},${data.scores.performance},${data.scores.accessibility},${data.scores.bestPractices},${data.scores.seo},${data.metrics.lcp},${data.metrics.cls},${data.metrics.tbt}`;
+  
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="test-${testId}.csv"`);
+  res.send(csv);
+});
+
 // Serve index.html for all other routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));

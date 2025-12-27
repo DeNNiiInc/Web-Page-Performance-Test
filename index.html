@@ -105,6 +105,26 @@
                         <canvas id="breakdown-chart" style="max-width: 500px; margin: 0 auto;"></canvas>
                         <div id="breakdown-stats" style="margin-top: 1rem;"></div>
                     </div>
+                    
+                    <!-- Optimization Checklist -->
+                    <div id="optimization-checklist" style="margin-top: 2rem; display: none;">
+                        <h3>Optimization Opportunities</h3>
+                        <div id="optimization-score" style="font-size: 2rem; font-weight: bold; text-align: center; margin: 1rem 0;"></div>
+                        <div id="optimization-items"></div>
+                    </div>
+                    
+                    <!-- Export Buttons -->
+                    <div id="export-buttons" style="margin-top: 2rem; display: none; text-align: center;">
+                        <h3>Export Results</h3>
+                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                            <a id="export-har" href="#" class="button" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--color-bg-tertiary); color: var(--color-text-primary); text-decoration: none; border-radius: 8px; border: 2px solid var(--color-border);">
+                                📦 Download HAR
+                            </a>
+                            <a id="export-csv" href="#" class="button" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--color-bg-tertiary); color: var(--color-text-primary); text-decoration: none; border-radius: 8px; border: 2px solid var(--color-border);">
+                                📊 Download CSV
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- History -->

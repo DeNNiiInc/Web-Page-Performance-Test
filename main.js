@@ -122,6 +122,14 @@ function displayResults(data) {
     if (typeof renderContentBreakdown === 'function') {
         renderContentBreakdown(data.id);
     }
+    
+    // Load and display optimizations
+    loadOptimizations(data.id);
+    
+    // Wire export buttons
+    document.getElementById('export-buttons').style.display = 'block';
+    document.getElementById('export-har').href = `/api/export/${data.id}/har`;
+    document.getElementById('export-csv').href = `/api/export/${data.id}/csv`;
 
     resultsArea.classList.add('visible');
     
@@ -238,9 +246,18 @@ function getUserUuid() {
     let uuid = localStorage.getItem('user_uuid');
     if (!uuid) {
         uuid = crypto.randomUUID();
-        localStorage.setItem('user_uuid', uuid);
+        });
+        
+        if (data.checks.length === 0) {
+            html = '<p style="text-align: center; color: var(--color-text-secondary);">✅ All optimization checks passed!</p>';
+        }
+        
+        itemsEl.innerHTML = html;
+        container.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Failed to load optimizations:', error);
     }
-    return uuid;
 }
 
 // Initialization
