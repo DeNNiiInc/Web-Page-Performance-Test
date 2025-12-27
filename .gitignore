@@ -1,0 +1,205 @@
+# ============================================================================
+# CREDENTIAL PROTECTION - CRITICAL SECURITY
+# ============================================================================
+# This file ensures NO credentials are ever committed to Git
+# ALL files matching these patterns are IGNORED by Git
+# ============================================================================
+
+# ===========================================
+# CREDENTIALS & SECRETS (HIGHEST PRIORITY)
+# ===========================================
+
+# Deployment configuration with SSH passwords and GitHub tokens
+deploy-config.json
+
+# Any credentials files
+credentials.json
+credentials*.json
+creds.json
+secrets.json
+secrets*.json
+
+# Environment files with secrets
+.env
+.env.*
+*.env
+
+# Configuration files that might contain secrets
+config.json
+config*.json
+settings.json
+settings*.json
+
+# ===========================================
+# SSH & AUTHENTICATION
+# ===========================================
+
+# SSH private keys
+*.pem
+*.key
+id_rsa
+id_rsa*
+id_dsa
+id_ecdsa
+id_ed25519
+
+# Known hosts and SSH configs with sensitive info
+known_hosts
+ssh_config
+
+# PuTTY private keys
+*.ppk
+
+# ===========================================
+# NODE.JS & DEPENDENCIES
+# ===========================================
+
+# Dependencies
+node_modules/
+bower_components/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ===========================================
+# LOGS & DEBUG FILES
+# ===========================================
+
+# Log files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ===========================================
+# PROCESS MANAGERS
+# ===========================================
+
+# PM2
+.pm2/
+ecosystem.config.js
+pm2.config.js
+
+# Forever
+.forever/
+
+# ===========================================
+# OPERATING SYSTEM FILES
+# ===========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===========================================
+# IDE & EDITOR FILES
+# ===========================================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ===========================================
+# BUILD & TEMPORARY FILES
+# ===========================================
+
+# Build directories
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Coverage directories
+coverage/
+.nyc_output/
+
+# ===========================================
+# BACKUP FILES
+# ===========================================
+
+# Backup files
+*.bak
+*.backup
+*.old
+*~
+
+# ===========================================
+# ADDITIONAL SECURITY
+# ===========================================
+
+# Database files (might contain sensitive data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificate files
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Token files
+*token*
+*secret*
+*password*
+
+# Notes to self: NEVER commit files with these patterns!

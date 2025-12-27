@@ -1,0 +1,13 @@
+{
+  "host": "YOUR_SERVER_IP",
+  "port": 22,
+  "username": "root",
+  "password": "YOUR_SSH_PASSWORD",
+  "remotePath": "/var/www/web-page-performance-test",
+  "appName": "web-page-performance-test",
+  "github": {
+    "username": "YOUR_GITHUB_USERNAME",
+    "token": "YOUR_GITHUB_TOKEN",
+    "repo": "DeNNiiInc/Web-Page-Performance-Test"
+  }
+}
