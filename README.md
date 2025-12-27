@@ -1,19 +1,20 @@
-# Web Page Performance Test
+# Web Page Performance Test ⚡
 
-![Desktop Results](docs/images/desktop_results.png)
+<div align="center">
+
+### Premium Real-Time Website Audit & Metrics Tool
+
+[![Live Demo](https://img.shields.io/badge/🚀_RUN_TEST_LIVE-web--page--performance--test.beyondcloud.technology-7209b7?style=for-the-badge&logo=rocket&logoColor=white)](https://web-page-performance-test.beyondcloud.technology/)
 
 A modern, high-performance web analytics tool that allows users to run Google Lighthouse audits on any website. Built with Node.js, Express, and a custom-tuned Chrome instance for accurate, reproducible results.
 
-## 🚀 LIVE DEMO: [web-page-performance-test.beyondcloud.technology](https://web-page-performance-test.beyondcloud.technology/)
+![NodeJS](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.18+-000000?style=flat-square&logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-13.0+-F44B21?style=flat-square&logo=lighthouse&logoColor=white)
 
----
+[Features](#-essential-features) • [Visual Tour](#-visual-tour) • [Getting Started](#-getting-started) • [Deployment](#-deployment)
 
-## 📱 Mobile Friendly & Responsive
-
-Designed with a mobile-first approach, ensuring a seamless experience across all devices.
-
-<div align="center">
-  <img src="docs/images/mobile_dashboard.png" width="375" alt="Mobile Dashboard View">
 </div>
 
 ---
@@ -32,13 +33,17 @@ Designed with a mobile-first approach, ensuring a seamless experience across all
 *   **📊 Detailed Reports**: Generates full HTML Lighthouse reports and JSON summaries.
 *   **📸 Visual Filmstrip**: Captures frame-by-frame screenshots of the page load experience.
 
-## 🛠️ Tech Stack
+## 📸 Visual Tour
 
-*   **Frontend**: Vanilla HTML/CSS/JS (No framework overhead).
-*   **Backend**: Node.js, Express.
-*   **Engine**: Google Lighthouse, Chrome Launcher, Puppeteer.
-*   **Database**: PostgreSQL.
-*   **Deployment**: Automated GitHub Actions-style deployment via SSH.
+<div align="center">
+  <h3>Desktop Analysis Results</h3>
+  <img src="docs/images/desktop_results.png" alt="Desktop Results" width="100%">
+  
+  <br><br>
+
+  <h3>Mobile Responsive Dashboard</h3>
+  <img src="docs/images/mobile_dashboard.png" alt="Mobile Dashboard View" width="375">
+</div>
 
 ## 🚀 Getting Started
 
@@ -60,11 +65,26 @@ Designed with a mobile-first approach, ensuring a seamless experience across all
     npm install
     ```
 
-3.  Start the server:
+3.  Apply Permissions (Optional):
+    ```bash
+    chmod +x config-fix.sh
+    ```
+
+4.  Start the server:
     ```bash
     npm start
     ```
     The application will run on `http://localhost:3000`.
 
+## 🛠️ Deployment
+
+This project includes automated deployment scripts for Proxmox/Linux environments.
+
+*   **Automated Sync**: `auto-sync-robust.sh` handles pulling changes and restarting services only when necessary.
+*   **Crednetial Safety**: `deploy-config.json` and `.env` files are strictly git-ignored.
+*   **License**: Distributed under the **GPL-3.0** License.
+
 ---
-*Developed and maintained by Beyond Cloud Technology.*
+<div align="center">
+  <sub>Developed and maintained by Beyond Cloud Technology.</sub>
+</div>
