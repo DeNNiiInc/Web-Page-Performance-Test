@@ -116,6 +116,10 @@ function displayResults(data) {
             e.preventDefault();
             window.open(`/waterfall.html?id=${data.id}`, '_blank');
         };
+        document.getElementById('view-images').onclick = (e) => {
+            e.preventDefault();
+            window.open(`/images.html?id=${data.id}`, '_blank');
+        };
     }
     
     // Load content breakdown
