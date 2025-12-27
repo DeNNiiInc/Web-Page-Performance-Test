@@ -62,12 +62,36 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Number of Runs</label>
+                            <select id="run-count" class="form-input">
+                                <option value="1">1 run (fastest)</option>
+                                <option value="3" selected>3 runs (recommended)</option>
+                                <option value="5">5 runs (good reliability)</option>
+                                <option value="10">10 runs (best reliability)</option>
+                            </select>
+                            <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.5rem;">
+                                Multiple runs provide more reliable median results
+                            </p>
+                        </div>
+                    </div>
 
                     <button id="run-btn" class="btn-primary">
                         <span>Run Test</span>
                         <div id="loading-spinner" class="loading-spinner" style="display: none;"></div>
                     </button>
                     <p id="error-msg" style="color: var(--color-accent-danger); display: none;"></p>
+                    
+                    <!-- Multi-Run Progress -->
+                    <div id="multi-run-progress" style="display: none; margin-top: 1.5rem;">
+                        <h4 style="color: var(--color-text-primary);">Running Tests...</h4>
+                        <div style="background: var(--color-bg-tertiary); border-radius: 8px; overflow: hidden; height: 30px; margin: 1rem 0;">
+                            <div id="progress-fill" style="height: 100%; background: var(--color-accent); width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <p id="progress-text" style="text-align: center; color: var(--color-text-secondary);"></p>
+                    </div>
                 </div>
 
                 <!-- Live Results -->
