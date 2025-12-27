@@ -35,6 +35,7 @@ function setLoading(isLoading) {
 // ============================================================================
 
 async function runTest() {
+    console.log('Run Test triggered');
     const urlInput = document.getElementById('test-url');
     const url = urlInput.value.trim();
     const errorMsg = document.getElementById('error-msg');
@@ -212,6 +213,15 @@ async function updateVersionBadge() {
 document.addEventListener('DOMContentLoaded', () => {
     updateVersionBadge();
     loadHistory();
+    
+    // Attach event listener programmatically
+    const runBtn = document.getElementById('run-btn');
+    if (runBtn) {
+        runBtn.addEventListener('click', runTest);
+        console.log('Run Test button listener attached');
+    } else {
+        console.error('Run Test button not found');
+    }
     
     // Auto-refresh Git badge
     setInterval(updateVersionBadge, 5 * 60 * 1000);
