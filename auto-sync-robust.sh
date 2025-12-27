@@ -36,9 +36,9 @@ fi
 
 log "🔄 Changes detected! Local: ${LOCAL:0:7} -> Remote: ${REMOTE:0:7}"
 
-# Pull changes
-if ! git pull origin main; then
-    log "❌ Error: Git pull failed"
+# Force update
+if ! git reset --hard origin/main; then
+    log "❌ Error: Git reset failed"
     exit 1
 fi
 

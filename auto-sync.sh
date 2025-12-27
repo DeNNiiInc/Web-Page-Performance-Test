@@ -39,8 +39,9 @@ fi
 
 log "🔄 Changes detected! Pulling updates..."
 
-# Pull changes
-git pull origin main 2>&1 | tee -a "$LOG_FILE"
+# Force update (overwrite local changes)
+log "⚠️ Resetting local changes to match remote..."
+git reset --hard origin/main 2>&1 | tee -a "$LOG_FILE"
 
 # Install/update dependencies if package.json changed
 if git diff --name-only $LOCAL $REMOTE | grep -q "package.json"; then
