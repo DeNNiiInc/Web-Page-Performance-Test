@@ -50,14 +50,29 @@ function renderWaterfall() {
     
     let html = '';
     
+    // Add time scale header
+    html += '<div class="waterfall-timescale">';
+    for (let sec = 0; sec <= Math.ceil(maxTime); sec++) {
+        const pos = sec * scale;
+        html += `<div class="time-marker" style="left: ${300 + pos}px">${sec}s</div>`;
+    }
+    html += '</div>';
+    
     filteredEntries.forEach((entry, index) => {
-        const label = truncateUrl(entry.url, 50);
+        const label = truncateUrl(entry.url, 35);
         const timingBars = renderTimingBars(entry.timing, scale);
+        const statusColor = getStatusColor(entry.status);
+        const sizeKB = (entry.size.transferSize / 1024).toFixed(1);
+        const timeMS = entry.timing.total.toFixed(0);
         
         html += `
             <div class="waterfall-row" data-request-id="${entry.requestId}">
+                <div class="request-number">${entry.requestId}</div>
+                <div class="status-badge" style="background: ${statusColor}">${entry.status}</div>
                 <div class="request-label" title="${entry.url}">${label}</div>
                 <div class="timeline">${timingBars}</div>
+                <div class="request-size">${sizeKB} KB</div>
+                <div class="request-time">${timeMS} ms</div>
             </div>
         `;
     });
@@ -71,6 +86,14 @@ function renderWaterfall() {
             showRequestDetails(requestId);
         });
     });
+}
+
+function getStatusColor(status) {
+    if (status >= 200 && status < 300) return '#4CAF50'; // Green
+    if (status >= 300 && status < 400) return '#FF9800'; // Orange
+    if (status >= 400 && status < 500) return '#F44336'; // Red
+    if (status >= 500) return '#B71C1C'; // Dark Red
+    return '#9E9E9E'; // Grey for others
 }
 
 function renderTimingBars(timing, scale) {

@@ -21,29 +21,82 @@
             background: var(--color-bg-tertiary);
             border-radius: 8px;
             padding: 1rem;
+            position: relative;
+        }
+        
+        .waterfall-timescale {
+            height: 25px;
+            position: relative;
+            margin-bottom: 10px;
+            margin-left: 370px;
+            border-bottom: 2px solid var(--color-border);
+        }
+        
+        .time-marker {
+            position: absolute;
+            top: 0;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            transform: translateX(-50%);
         }
         
         .waterfall-row {
             display: flex;
             align-items: center;
-            height: 25px;
-            margin-bottom: 2px;
+            height: 28px;
+            margin-bottom: 1px;
             cursor: pointer;
             transition: background 0.2s ease;
+            gap: 8px;
         }
         
         .waterfall-row:hover {
             background: rgba(114, 9, 183, 0.2);
         }
         
+        .request-number {
+            width: 35px;
+            text-align: right;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            width: 40px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+        }
+        
         .request-label {
-            width: 300px;
-            padding: 0 10px;
-            font-size: 12px;
+            width: 250px;
+            padding: 0 8px;
+            font-size: 11px;
             color: var(--color-text-primary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        
+        .request-size {
+            width: 65px;
+            font-size: 10px;
+            color: var(--color-text-secondary);
+            text-align: right;
+        }
+        
+        .request-time {
+            width: 60px;
+            font-size: 10px;
+            color: var(--color-text-secondary);
+            text-align: right;
+            font-weight: 600;
         }
         
         .timeline {
