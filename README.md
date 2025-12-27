@@ -1,6 +1,6 @@
 # Web Page Performance Test
 
-![Desktop Results](/c:/Users/DM/.gemini/antigravity/brain/b032648a-0921-4de6-9336-fa49fdde7396/readme_desktop_results_1766844250559.png)
+![Desktop Results](docs/images/desktop_results.png)
 
 A modern, high-performance web analytics tool that allows users to run Google Lighthouse audits on any website. Built with Node.js, Express, and a custom-tuned Chrome instance for accurate, reproducible results.
 
@@ -13,7 +13,7 @@ A modern, high-performance web analytics tool that allows users to run Google Li
 Designed with a mobile-first approach, ensuring a seamless experience across all devices.
 
 <div align="center">
-  <img src="/c:/Users/DM/.gemini/antigravity/brain/b032648a-0921-4de6-9336-fa49fdde7396/readme_mobile_dashboard_1766844270721.png" width="375" alt="Mobile Dashboard View">
+  <img src="docs/images/mobile_dashboard.png" width="375" alt="Mobile Dashboard View">
 </div>
 
 ---
