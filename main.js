@@ -107,6 +107,16 @@ function displayResults(data) {
         </a>
     `;
     resultsArea.appendChild(actionsDiv);
+    
+    // Show waterfall link
+    const waterfallContainer = document.getElementById('waterfall-link-container');
+    if (waterfallContainer) {
+        waterfallContainer.style.display = 'block';
+        document.getElementById('view-waterfall').onclick = (e) => {
+            e.preventDefault();
+            window.open(`/waterfall.html?id=${data.id}`, '_blank');
+        };
+    }
 
     resultsArea.classList.add('visible');
     

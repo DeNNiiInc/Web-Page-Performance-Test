@@ -204,3 +204,8 @@ coverage/
 *password*
 
 # Notes to self: NEVER commit files with these patterns!
+
+# ===========================================
+# IGNORED DATA FOLDERS
+# ===========================================
+SAMPLE/

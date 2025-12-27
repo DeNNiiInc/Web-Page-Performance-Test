@@ -91,6 +91,20 @@
                             <div class="metric-label">TBT (ms)</div>
                         </div>
                     </div>
+                    
+                    <!-- Waterfall Link -->
+                    <div style="margin-top: 1.5rem; display: none;" id="waterfall-link-container">
+                        <a href="#" id="view-waterfall" class="button" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--color-accent); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            📊 View Waterfall Chart
+                        </a>
+                    </div>
+                    
+                    <!-- Content Breakdown -->
+                    <div id="content-breakdown" style="margin-top: 2rem; display: none;">
+                        <h3>Content Breakdown</h3>
+                        <canvas id="breakdown-chart" style="max-width: 500px; margin: 0 auto;"></canvas>
+                        <div id="breakdown-stats" style="margin-top: 1rem;"></div>
+                    </div>
                 </div>
 
                 <!-- History -->
