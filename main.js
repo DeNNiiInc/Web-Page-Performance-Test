@@ -312,6 +312,43 @@ function getUserUuid() {
     let uuid = localStorage.getItem('user_uuid');
     if (!uuid) {
         uuid = crypto.randomUUID();
+        localStorage.setItem('user_uuid', uuid);
+    }
+    return uuid;
+}
+
+async function loadOptimizations(testId) {
+    try {
+        const response = await fetch(`/reports/${testId}.optimizations.json`);
+        if (!response.ok) throw new Error('Optimizations not found');
+        
+        const data = await response.json();
+        const container = document.getElementById('optimization-checklist');
+        const scoreEl = document.getElementById('optimization-score');
+        const itemsEl = document.getElementById('optimization-items');
+        
+        // Display score
+        const score = data.summary.score;
+        scoreEl.textContent = `${score}%`;
+        scoreEl.style.color = score >= 80 ? '#4CAF50' : score >= 50 ? '#FFC107' : '#F44336';
+        
+        // Display checks
+        let html = '';
+        data.checks.forEach(check => {
+            const icon = check.status === 'error' ? '❌' : check.status === 'warning' ? '⚠️' : 'ℹ️';
+            const color = check.status === 'error' ? '#F44336' : check.status === 'warning' ? '#FFC107' : '#2196F3';
+            
+            html += `
+                <div style="border-left: 4px solid ${color}; padding: 1rem; margin: 0.5rem 0; background: var(--color-bg-tertiary); border-radius: 4px;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">
+                        ${icon} ${check.title}
+                    </div>
+                    <div style="color: var(--color-text-secondary); font-size: 0.9rem;">
+                        ${check.description}
+                    </div>
+                    ${check.savings ? `<div style="color: var(--color-accent); font-size: 0.85rem; margin-top: 0.5rem;">Potential savings: ${(check.savings / 1000).toFixed(1)}s</div>` : ''}
+                </div>
+            `;
         });
         
         if (data.checks.length === 0) {
@@ -325,6 +362,7 @@ function getUserUuid() {
         console.error('Failed to load optimizations:', error);
     }
 }
+
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
