@@ -167,6 +167,19 @@ async function loadHistory() {
         const container = document.getElementById('history-list');
         container.innerHTML = '<h3>Recent Tests</h3>';
         
+        // Add comparison controls
+        container.innerHTML += `
+            <div id="comparison-controls" style="display: none; background: var(--color-bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <span id="comparison-status" style="margin-right: 1rem; font-weight: 600;"></span>
+                <button id="compare-btn" class="btn-primary" style="padding: 0.5rem 1.5rem;" disabled>
+                    Compare Selected Tests
+                </button>
+                <button id="clear-selection-btn" class="btn-secondary" style="padding: 0.5rem 1rem; margin-left: 0.5rem;">
+                    Clear
+                </button>
+            </div>
+        `;
+        
         if (history.length === 0) {
             container.innerHTML += '<p style="color: var(--color-text-tertiary)">No tests run yet.</p>';
             return;
@@ -179,13 +192,19 @@ async function loadHistory() {
             
             const html = `
                 <div class="history-item">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem">${test.url}</div>
-                        <div style="font-size: 0.75rem; color: var(--color-text-muted)">
-                            ${date} • ${test.isMobile ? '📱 Mobile' : '💻 Desktop'}
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <input type="checkbox" class="compare-checkbox" data-test-id="${test.id}" style="width: 20px; height: 20px; cursor: pointer;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.9rem">${test.url}</div>
+                            <div style="font-size: 0.75rem; color: var(--color-text-muted)">
+                                ${date} • ${test.isMobile ? '📱 Mobile' : '💻 Desktop'}
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <a href="/waterfall.html?id=${test.id}" target="_blank" class="btn-secondary" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;" title="View Waterfall">
+                            📊 Waterfall
+                        </a>
                         <a href="/reports/${test.id}.html" target="_blank" class="btn-secondary" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;">
                             View Report
                         </a>
@@ -197,10 +216,57 @@ async function loadHistory() {
             `;
             container.innerHTML += html;
         });
+        
+        // Setup comparison functionality
+        setupComparisonControls();
 
     } catch (error) {
         console.error('Failed to load history', error);
     }
+}
+
+function setupComparisonControls() {
+    const checkboxes = document.querySelectorAll('.compare-checkbox');
+    const controls = document.getElementById('comparison-controls');
+    const status = document.getElementById('comparison-status');
+    const compareBtn = document.getElementById('compare-btn');
+    const clearBtn = document.getElementById('clear-selection-btn');
+    
+    function updateComparisonStatus() {
+        const selected = Array.from(checkboxes).filter(cb => cb.checked);
+        
+        if (selected.length === 0) {
+            controls.style.display = 'none';
+        } else {
+            controls.style.display = 'block';
+            status.textContent = `${selected.length} test${selected.length > 1 ? 's' : ''} selected`;
+            compareBtn.disabled = selected.length !== 2;
+            
+            if (selected.length > 2) {
+                // Uncheck oldest selections
+                selected[0].checked = false;
+                updateComparisonStatus();
+            }
+        }
+    }
+    
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateComparisonStatus);
+    });
+    
+    compareBtn.addEventListener('click', () => {
+        const selected = Array.from(checkboxes).filter(cb => cb.checked);
+        if (selected.length === 2) {
+            const test1 = selected[0].dataset.testId;
+            const test2 = selected[1].dataset.testId;
+            window.open(`/compare.html?test1=${test1}&test2=${test2}`, '_blank');
+        }
+    });
+    
+    clearBtn.addEventListener('click', () => {
+        checkboxes.forEach(cb => cb.checked = false);
+        updateComparisonStatus();
+    });
 }
 
 // ============================================================================

@@ -85,6 +85,19 @@
     </div>
     
     <script>
+        // Auto-load comparison from URL parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const test1 = params.get('test1');
+            const test2 = params.get('test2');
+            
+            if (test1 && test2) {
+                document.getElementById('test1-id').value = test1;
+                document.getElementById('test2-id').value = test2;
+                document.getElementById('compare-btn').click();
+            }
+        });
+        
         document.getElementById('compare-btn').addEventListener('click', async () => {
             const test1Id = document.getElementById('test1-id').value.trim();
             const test2Id = document.getElementById('test2-id').value.trim();
