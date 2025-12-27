@@ -35,21 +35,60 @@ app.get("/api/git-info", (req, res) => {
   });
 });
 
-// API Endpoint: Run Test
+// API Endpoint: Run Test (supports multi-run)
 app.post("/api/run-test", async (req, res) => {
-  const { url, isMobile } = req.body;
+  const { url, isMobile, runs = 1 } = req.body;
   const userUuid = req.headers['x-user-uuid'];
-  // Use header for IP if behind proxy, fallback to socket address
   const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (!url) return res.status(400).json({ error: "URL is required" });
+  
+  // Validate run count
+  if (runs < 1 || runs > 10) {
+    return res.status(400).json({ error: "Runs must be between 1 and 10" });
+  }
 
   try {
-    const result = await runner.runTest(url, { isMobile, userUuid, userIp });
-    res.json(result);
+    // Single run (original behavior)
+    if (runs === 1) {
+      const result = await runner.runTest(url, { isMobile, userUuid, userIp });
+      return res.json(result);
+    }
+    
+    // Multi-run
+    const multiRun = require('./lib/multi-run');
+    const suiteId = runner.generateTestId();
+    
+    // Create suite record
+    await multiRun.createSuite(suiteId, userUuid, url, isMobile ? 'mobile' : 'desktop', runs);
+    
+    // Return suite ID immediately
+    res.json({ suiteId, runs, status: 'running' });
+    
+    // Execute runs asynchronously
+    multiRun.executeMultipleRuns(suiteId, url, isMobile, runs, userUuid, userIp)
+      .catch(error => console.error('Multi-run execution failed:', error));
+      
   } catch (error) {
     console.error("Test failed:", error);
     res.status(500).json({ error: "Test failed", details: error.message });
+  }
+});
+
+// API Endpoint: Suite Status (for multi-run progress tracking)
+app.get("/api/suite-status/:suiteId", async (req, res) => {
+  try {
+    const multiRun = require('./lib/multi-run');
+    const suite = await multiRun.getSuiteStatus(req.params.suiteId);
+    
+    if (!suite) {
+      return res.status(404).json({ error: "Suite not found" });
+    }
+    
+    res.json(suite);
+  } catch (error) {
+    console.error("Suite status error:", error);
+    res.status(500).json({ error: "Failed to get suite status" });
   }
 });
 
