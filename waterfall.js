@@ -50,11 +50,12 @@ function renderWaterfall() {
     
     let html = '';
     
-    // Add time scale header
+    // Add time scale header with grid lines
     html += '<div class="waterfall-timescale">';
     for (let sec = 0; sec <= Math.ceil(maxTime); sec++) {
         const pos = sec * scale;
         html += `<div class="time-marker" style="left: ${300 + pos}px">${sec}s</div>`;
+        html += `<div class="grid-line" style="left: ${300 + pos}px"></div>`;
     }
     html += '</div>';
     
