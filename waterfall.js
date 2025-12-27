@@ -60,9 +60,10 @@ function renderWaterfall() {
     html += '</div>';
     
     filteredEntries.forEach((entry, index) => {
-        const label = truncateUrl(entry.url, 35);
+        const label = truncateUrl(entry.url, 30);
         const timingBars = renderTimingBars(entry.timing, scale);
         const statusColor = getStatusColor(entry.status);
+        const typeBadge = getResourceTypeBadge(entry.resourceType);
         const sizeKB = (entry.size.transferSize / 1024).toFixed(1);
         const timeMS = entry.timing.total.toFixed(0);
         
@@ -70,6 +71,7 @@ function renderWaterfall() {
             <div class="waterfall-row" data-request-id="${entry.requestId}">
                 <div class="request-number">${entry.requestId}</div>
                 <div class="status-badge" style="background: ${statusColor}">${entry.status}</div>
+                <div class="type-badge">${typeBadge}</div>
                 <div class="request-label" title="${entry.url}">${label}</div>
                 <div class="timeline">${timingBars}</div>
                 <div class="request-size">${sizeKB} KB</div>
@@ -95,6 +97,19 @@ function getStatusColor(status) {
     if (status >= 400 && status < 500) return '#F44336'; // Red
     if (status >= 500) return '#B71C1C'; // Dark Red
     return '#9E9E9E'; // Grey for others
+}
+
+function getResourceTypeBadge(type) {
+    const badges = {
+        'Document': 'HTML',
+        'Stylesheet': 'CSS',
+        'Script': 'JS',
+        'Image': 'IMG',
+        'Font': 'FONT',
+        'XHR': 'XHR',
+        'Fetch': 'API'
+    };
+    return badges[type] || 'OTHER';
 }
 
 function renderTimingBars(timing, scale) {
