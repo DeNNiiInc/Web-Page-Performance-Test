@@ -6,6 +6,7 @@
 let currentHarData = null;
 let currentFilter = 'all';
 let currentSort = 'time-desc'; // Default: slowest to fastest
+let currentViewMode = 'waterfall'; // waterfall or connection
 
 // Load HAR data from URL parameter
 async function init() {
@@ -40,6 +41,12 @@ function renderWaterfall() {
         return;
     }
     
+    if (currentViewMode === 'connection') {
+        renderConnectionView(entries);
+        return;
+    }
+    
+    // Original waterfall view
     // Calculate timeline scale
     const maxTime = Math.max(...entries.map(e => e.timing.endTime));
     const scale = 1000 / maxTime; // pixels per second
@@ -96,6 +103,112 @@ function renderWaterfall() {
     
     // Render details table
     renderDetailsTable(filteredEntries);
+}
+
+function renderConnectionView(entries) {
+    const canvas = document.getElementById('waterfallCanvas');
+    
+    // Group requests by connection/socket
+    const connections = groupByConnection(entries);
+    
+    if (connections.length === 0) {
+        canvas.innerHTML = '<p>No connection information available</p>';
+        return;
+    }
+    
+    // Calculate timeline scale
+    const maxTime = Math.max(...entries.map(e => e.timing.endTime));
+    const scale = 1000 / maxTime;
+    
+    let html = '';
+    
+    // Add time scale header
+    html += '<div class="waterfall-timescale">';
+    for (let sec = 0; sec <= Math.ceil(maxTime); sec++) {
+        const pos = sec * scale;
+        html += `<div class="time-marker" style="left: ${300 + pos}px">${sec}s</div>`;
+        html += `<div class="grid-line" style="left: ${300 + pos}px"></div>`;
+    }
+    html += '</div>';
+    
+    // Render each connection as a group
+    connections.forEach((conn, connIndex) => {
+        const domain = conn.domain || 'Unknown';
+        const connLabel = `Connection ${connIndex + 1}: ${domain}`;
+        const reqCount = conn.requests.length;
+        const reused = conn.reused ? '♻️ Reused' : '🆕 New';
+        
+        html += `
+            <div class="connection-group">
+                <div class="connection-header">
+                    <span class="connection-label">${connLabel}</span>
+                    <span class="connection-badge">${reused}</span>
+                    <span class="connection-count">${reqCount} requests</span>
+                </div>
+                <div class="connection-requests">
+        `;
+        
+        conn.requests.forEach(entry => {
+            const label = truncateUrl(entry.url, 25);
+            const timingBars = renderTimingBars(entry.timing, scale);
+            const statusColor = getStatusColor(entry.status);
+            const typeBadge = getResourceTypeBadge(entry.resourceType);
+            
+            html += `
+                <div class="waterfall-row connection-row" data-request-id="${entry.requestId}">
+                    <div class="request-number">${entry.requestId}</div>
+                    <div class="status-badge" style="background: ${statusColor}">${entry.status}</div>
+                    <div class="type-badge">${typeBadge}</div>
+                    <div class="request-label" title="${entry.url}">${label}</div>
+                    <div class="timeline">${timingBars}</div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    canvas.innerHTML = html;
+    
+    // Attach click handlers
+    document.querySelectorAll('.waterfall-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const requestId = parseInt(row.dataset.requestId);
+            showRequestDetails(requestId);
+        });
+    });
+    
+    // Render details table with all requests
+    const allRequests = connections.flatMap(c => c.requests);
+    renderDetailsTable(allRequests);
+}
+
+function groupByConnection(entries) {
+    const connectionMap = new Map();
+    
+    entries.forEach(entry => {
+        // Use socket ID or create connection based on domain + protocol
+        const connKey = entry.socket || `${entry.domain}-${entry.protocol || 'http'}`;
+        
+        if (!connectionMap.has(connKey)) {
+            connectionMap.set(connKey, {
+                id: connKey,
+                domain: entry.domain,
+                protocol: entry.protocol,
+                reused: entry.connectionReused,
+                requests: []
+            });
+        }
+        
+        connectionMap.get(connKey).requests.push(entry);
+    });
+    
+    // Convert to array and sort by first request time
+    return Array.from(connectionMap.values())
+        .sort((a, b) => a.requests[0].timing.startTime - b.requests[0].timing.startTime);
 }
 
 function renderDetailsTable(entries) {
@@ -449,6 +562,15 @@ function setupEventListeners() {
             currentFilter = btn.dataset.type;
             renderWaterfall();
         });
+    });
+    
+    // View mode selector
+    document.getElementById('viewMode').addEventListener('change', (e) => {
+        currentViewMode = e.target.value;
+        // Update heading
+        document.querySelector('.waterfall-container h1').textContent = 
+            currentViewMode === 'connection' ? 'Connection View' : 'Request Waterfall';
+        renderWaterfall();
     });
     
     // Sort dropdown
