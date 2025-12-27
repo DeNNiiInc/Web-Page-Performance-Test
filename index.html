@@ -38,11 +38,65 @@
         <main class="main-content">
             <div class="panel">
                 <div class="panel-header">
-                    <div class="panel-icon">🚀</div>
-                    <h2 class="panel-title">Project Content</h2>
+                    <div class="panel-icon">⚡</div>
+                    <h2 class="panel-title">Start Performance Test</h2>
                 </div>
-                <p>This is the base template. Add your project content here.</p>
-            </div>
+
+                <!-- Test Launcher Form -->
+                <div class="launcher-form">
+                    <div class="form-group">
+                        <label class="form-label" for="test-url">Enter Website URL</label>
+                        <input type="url" id="test-url" class="form-input" placeholder="https://example.com" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Device Emulation</label>
+                            <div class="toggle-group">
+                                <div class="toggle-option active" data-value="mobile" onclick="setDevice('mobile')">
+                                    📱 Mobile
+                                </div>
+                                <div class="toggle-option" data-value="desktop" onclick="setDevice('desktop')">
+                                    💻 Desktop
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="run-btn" class="btn-primary" onclick="runTest()">
+                        <span>Run Test</span>
+                        <div id="loading-spinner" class="loading-spinner" style="display: none;"></div>
+                    </button>
+                    <p id="error-msg" style="color: var(--color-accent-danger); display: none;"></p>
+                </div>
+
+                <!-- Live Results -->
+                <div id="results-area" class="results-container">
+                    <h3>Latest Results</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="score-perf">-</div>
+                            <div class="metric-label">Performance</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-lcp">-</div>
+                            <div class="metric-label">LCP (ms)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-cls">-</div>
+                            <div class="metric-label">CLS</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-tbt">-</div>
+                            <div class="metric-label">TBT (ms)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="history-list" id="history-list">
+                    <!-- History items will be populated here -->
+                </div>
         </main>
 
         <!-- Footer -->
