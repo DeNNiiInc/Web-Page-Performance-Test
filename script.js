@@ -5,14 +5,20 @@
 async function updateVersionBadge() {
     try {
         const response = await fetch('/api/git-info');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
         const commitIdEl = document.getElementById('commit-id');
         const commitAgeEl = document.getElementById('commit-age');
         
-        if (data.error) {
-            commitIdEl.textContent = 'N/A';
-            commitAgeEl.textContent = 'Local Dev';
+        if (data.error || !data.commitId) {
+            // Fallback - try to get from git locally or show placeholder
+            commitIdEl.textContent = 'local';
+            commitAgeEl.textContent = 'dev mode';
             commitIdEl.style.color = 'var(--color-text-muted)';
         } else {
             commitIdEl.textContent = data.commitId;
@@ -21,8 +27,11 @@ async function updateVersionBadge() {
         }
     } catch (error) {
         console.error('Failed to fetch git info:', error);
-        document.getElementById('commit-id').textContent = 'N/A';
-        document.getElementById('commit-age').textContent = 'Error';
+        const commitIdEl = document.getElementById('commit-id');
+        const commitAgeEl = document.getElementById('commit-age');
+        commitIdEl.textContent = 'local';
+        commitAgeEl.textContent = 'dev mode';
+        commitIdEl.style.color = 'var(--color-text-tertiary)';
     }
 }
 
