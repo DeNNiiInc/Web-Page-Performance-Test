@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Tests - Web Page Performance Test</title>
+    <link rel="icon" type="image/png" href="Logo.png">
+    <link rel="stylesheet" href="styles.css?v=3.0">
+    <style>
+        .comparison-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .test-card {
+            background: var(--color-bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
+        .metric-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--color-bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-name {
+            font-weight: 600;
+            text-align: center;
+            color: var(--color-text-secondary);
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .delta {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .delta.better {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .delta.worse {
+            background: #F44336;
+            color: white;
+        }
+        
+        .delta.neutral {
+            background: var(--color-border);
+            color: var(--color-text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="comparison-container">
+        <h1>Test Comparison</h1>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <input type="text" id="test1-id" placeholder="Test 1 ID" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 2px solid var(--color-border);">
+            <input type="text" id="test2-id" placeholder="Test 2 ID" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 2px solid var(--color-border);">
+            <button id="compare-btn" class="btn-primary" style="padding: 0.75rem 2rem;">Compare</button>
+        </div>
+        
+        <div id="comparison-results"></div>
+    </div>
+    
+    <script>
+        document.getElementById('compare-btn').addEventListener('click', async () => {
+            const test1Id = document.getElementById('test1-id').value.trim();
+            const test2Id = document.getElementById('test2-id').value.trim();
+            
+            if (!test1Id || !test2Id) {
+                alert('Please enter both test IDs');
+                return;
+            }
+            
+            try {
+                const [test1, test2] = await Promise.all([
+                    fetch(`/reports/${test1Id}.json`).then(r => r.json()),
+                    fetch(`/reports/${test2Id}.json`).then(r => r.json())
+                ]);
+                
+                renderComparison(test1, test2);
+            } catch (error) {
+                alert('Failed to load test results: ' + error.message);
+            }
+        });
+        
+        function renderComparison(test1, test2) {
+            const container = document.getElementById('comparison-results');
+            
+            const metrics = [
+                { key: 'performance', label: 'Performance Score', path: 'scores.performance', higherBetter: true },
+                { key: 'lcp', label: 'LCP (ms)', path: 'metrics.lcp', higherBetter: false },
+                { key: 'cls', label: 'CLS', path: 'metrics.cls', higherBetter: false },
+                { key: 'tbt', label: 'TBT (ms)', path: 'metrics.tbt', higherBetter: false }
+            ];
+            
+            let html = '<div class="comparison-grid">';
+            
+            // Test 1 Card
+            html += `
+                <div class="test-card">
+                    <h3>Test 1</h3>
+                    <p><strong>URL:</strong> ${test1.url}</p>
+                    <p><strong>Date:</strong> ${new Date(test1.timestamp).toLocaleString()}</p>
+                    <p><strong>Device:</strong> ${test1.isMobile ? 'Mobile' : 'Desktop'}</p>
+                </div>
+            `;
+            
+            // Test 2 Card
+            html += `
+                <div class="test-card">
+                    <h3>Test 2</h3>
+                    <p><strong>URL:</strong> ${test2.url}</p>
+                    <p><strong>Date:</strong> ${new Date(test2.timestamp).toLocaleString()}</p>
+                    <p><strong>Device:</strong> ${test2.isMobile ? 'Mobile' : 'Desktop'}</p>
+                </div>
+            `;
+            
+            html += '</div>';
+            
+            // Metric Comparisons
+            html += '<h2 style="margin-top: 2rem;">Metrics Comparison</h2>';
+            
+            metrics.forEach(metric => {
+                const value1 = getNestedValue(test1, metric.path);
+                const value2 = getNestedValue(test2, metric.path);
+                const delta = value2 - value1;
+                const percentDelta = ((delta / value1) * 100).toFixed(1);
+                
+                let deltaClass = 'neutral';
+                let deltaText = `${delta >= 0 ? '+' : ''}${percentDelta}%`;
+                
+                if (metric.higherBetter) {
+                    deltaClass = delta > 0 ? 'better' : delta < 0 ? 'worse' : 'neutral';
+                } else {
+                    deltaClass = delta < 0 ? 'better' : delta > 0 ? 'worse' : 'neutral';
+                }
+                
+                html += `
+                    <div class="metric-comparison">
+                        <div class="metric-value" style="text-align: right;">${formatValue(value1, metric.key)}</div>
+                        <div style="text-align: center;">
+                            <div class="metric-name">${metric.label}</div>
+                            <div class="delta ${deltaClass}">${deltaText}</div>
+                        </div>
+                        <div class="metric-value">${formatValue(value2, metric.key)}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        }
+        
+        function formatValue(value, key) {
+            if (key === 'cls') return value.toFixed(3);
+            return Math.round(value);
+        }
+    </script>
+</body>
+</html>
