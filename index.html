@@ -97,23 +97,54 @@
                 <!-- Live Results -->
                 <div id="results-area" class="results-container">
                     <h3>Latest Results</h3>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-value" id="score-perf">-</div>
-                            <div class="metric-label">Performance</div>
+                    <div class="gtmetrix-dashboard">
+                        <!-- Grade Section -->
+                        <div class="dashboard-card grade-card">
+                            <h3>GTmetrix Grade</h3>
+                            <div class="grade-container">
+                                <div id="overall-grade" class="grade-circle">
+                                    <span class="grade-letter">-</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-value" id="metric-lcp">-</div>
-                            <div class="metric-label">LCP (ms)</div>
+
+                        <!-- Scores Section -->
+                        <div class="dashboard-card scores-card">
+                            <div class="score-item">
+                                <div class="score-label">Performance</div>
+                                <div class="score-value" id="performance-score">-</div>
+                            </div>
+                            <div class="score-divider"></div>
+                            <div class="score-item">
+                                <div class="score-label">Structure</div>
+                                <div class="score-value" id="structure-score">-</div>
+                            </div>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-value" id="metric-cls">-</div>
-                            <div class="metric-label">CLS</div>
+
+                        <!-- Vitals Section -->
+                        <div class="dashboard-card vitals-card">
+                            <h3>Web Vitals</h3>
+                            <div class="vitals-grid">
+                                <div class="vital-item">
+                                    <div class="vital-label">LCP</div>
+                                    <div class="vital-value" id="vital-lcp">-</div>
+                                </div>
+                                <div class="vital-item">
+                                    <div class="vital-label">TBT</div>
+                                    <div class="vital-value" id="vital-tbt">-</div>
+                                </div>
+                                <div class="vital-item">
+                                    <div class="vital-label">CLS</div>
+                                    <div class="vital-value" id="vital-cls">-</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-value" id="metric-tbt">-</div>
-                            <div class="metric-label">TBT (ms)</div>
-                        </div>
+                    </div>
+                    
+                    <!-- Filmstrip Section -->
+                    <div id="filmstrip-section" style="display: none; margin-top: 2rem;">
+                        <h3>Speed Visualization</h3>
+                        <div id="filmstrip-container" class="filmstrip-container"></div>
                     </div>
                     
                     <!-- Performance Grades -->
