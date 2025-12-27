@@ -29,6 +29,7 @@ config.json
 config*.json
 settings.json
 settings*.json
+lib/db-config.js
 
 # ===========================================
 # SSH & AUTHENTICATION

@@ -61,7 +61,10 @@ async function runTest() {
     try {
         const response = await fetch('/api/run-test', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-user-uuid': getUserUuid()
+            },
             body: JSON.stringify({ 
                 url: url,
                 isMobile: currentDevice === 'mobile'
@@ -131,7 +134,11 @@ function showError(msg) {
 
 async function loadHistory() {
     try {
-        const response = await fetch('/api/history');
+        const response = await fetch('/api/history', {
+            headers: {
+                'x-user-uuid': getUserUuid()
+            }
+        });
         const history = await response.json();
         
         const container = document.getElementById('history-list');
@@ -209,8 +216,24 @@ async function updateVersionBadge() {
     }
 }
 
+// ============================================================================
+// Identity Management
+// ============================================================================
+function getUserUuid() {
+    let uuid = localStorage.getItem('user_uuid');
+    if (!uuid) {
+        uuid = crypto.randomUUID();
+        localStorage.setItem('user_uuid', uuid);
+    }
+    return uuid;
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    // Ensure we have an identity
+    const userUuid = getUserUuid();
+    console.log('User Identity:', userUuid);
+
     updateVersionBadge();
     loadHistory();
     

@@ -38,10 +38,14 @@ app.get("/api/git-info", (req, res) => {
 // API Endpoint: Run Test
 app.post("/api/run-test", async (req, res) => {
   const { url, isMobile } = req.body;
+  const userUuid = req.headers['x-user-uuid'];
+  // Use header for IP if behind proxy, fallback to socket address
+  const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
   if (!url) return res.status(400).json({ error: "URL is required" });
 
   try {
-    const result = await runner.runTest(url, { isMobile });
+    const result = await runner.runTest(url, { isMobile, userUuid, userIp });
     res.json(result);
   } catch (error) {
     console.error("Test failed:", error);
@@ -50,8 +54,11 @@ app.post("/api/run-test", async (req, res) => {
 });
 
 // API Endpoint: History
-app.get("/api/history", (req, res) => {
-  const history = runner.getHistory();
+app.get("/api/history", async (req, res) => {
+  const userUuid = req.headers['x-user-uuid'];
+  const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  
+  const history = await runner.getHistory(userUuid, userIp);
   res.json(history);
 });
 
