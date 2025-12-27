@@ -93,6 +93,168 @@ function renderWaterfall() {
             showRequestDetails(requestId);
         });
     });
+    
+    // Render details table
+    renderDetailsTable(filteredEntries);
+}
+
+function renderDetailsTable(entries) {
+    const container = document.getElementById('requestDetailsTable');
+    
+    let html = `
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th data-sort="id"># <span class="sort-icon">▼</span></th>
+                    <th data-sort="url">URL <span class="sort-icon">▼</span></th>
+                    <th data-sort="status">Status <span class="sort-icon">▼</span></th>
+                    <th data-sort="type">Type <span class="sort-icon">▼</span></th>
+                    <th data-sort="method">Method <span class="sort-icon">▼</span></th>
+                    <th data-sort="size">Size <span class="sort-icon">▼</span></th>
+                    <th data-sort="time">Time <span class="sort-icon">▼</span></th>
+                    <th data-sort="protocol">Protocol <span class="sort-icon">▼</span></th>
+                    <th data-sort="priority">Priority <span class="sort-icon">▼</span></th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    entries.forEach(entry => {
+        const statusColor = getStatusColor(entry.status);
+        const sizeKB = (entry.size.transferSize / 1024).toFixed(1);
+        const timeMS = entry.timing.total.toFixed(0);
+        
+        html += `
+            <tr data-request-id="${entry.requestId}">
+                <td>${entry.requestId}</td>
+                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${entry.url}">${truncateUrl(entry.url, 60)}</td>
+                <td><span style="background: ${statusColor}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.85rem;">${entry.status}</span></td>
+                <td>${getResourceTypeBadgeText(entry.resourceType)}</td>
+                <td>${entry.method}</td>
+                <td style="text-align: right;">${sizeKB} KB</td>
+                <td style="text-align: right;">${timeMS} ms</td>
+                <td>${entry.protocol || 'N/A'}</td>
+                <td>${entry.priority || 'N/A'}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = html;
+    
+    // Add click handlers to table rows
+    container.querySelectorAll('tbody tr').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+            const requestId = parseInt(row.dataset.requestId);
+            showRequestDetails(requestId);
+        });
+    });
+    
+    // Add sort handlers to headers
+    setupTableSort();
+}
+
+function getResourceTypeBadgeText(type) {
+    const badges = {
+        'Document': 'HTML',
+        'Stylesheet': 'CSS',
+        'Script': 'JavaScript',
+        'Image': 'Image',
+        'Font': 'Font',
+        'XHR': 'XHR',
+        'Fetch': 'Fetch'
+    };
+    return badges[type] || type;
+}
+
+function setupTableSort() {
+    let currentTableSort = { column: null, ascending: true };
+    
+    document.querySelectorAll('.details-table th[data-sort]').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.sort;
+            
+            // Toggle sort direction if same column
+            if (currentTableSort.column === column) {
+                currentTableSort.ascending = !currentTableSort.ascending;
+            } else {
+                currentTableSort.column = column;
+                currentTableSort.ascending = true;
+            }
+            
+            // Update header styles
+            document.querySelectorAll('.details-table th').forEach(h => {
+                h.classList.remove('sorted');
+                h.querySelector('.sort-icon').textContent = '▼';
+            });
+            header.classList.add('sorted');
+            header.querySelector('.sort-icon').textContent = currentTableSort.ascending ? '▲' : '▼';
+            
+            // Sort and re-render
+            sortTableBy(column, currentTableSort.ascending);
+        });
+    });
+}
+
+function sortTableBy(column, ascending) {
+    const entries = [...currentHarData.entries];
+    const filteredEntries = currentFilter === 'all' 
+        ? entries 
+        : entries.filter(e => e.resourceType === currentFilter);
+    
+    filteredEntries.sort((a, b) => {
+        let valA, valB;
+        
+        switch(column) {
+            case 'id':
+                valA = a.requestId;
+                valB = b.requestId;
+                break;
+            case 'url':
+                valA = a.url.toLowerCase();
+                valB = b.url.toLowerCase();
+                return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            case 'status':
+                valA = a.status;
+                valB = b.status;
+                break;
+            case 'type':
+                valA = a.resourceType;
+                valB = b.resourceType;
+                return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            case 'method':
+                valA = a.method;
+                valB = b.method;
+                return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            case 'size':
+                valA = a.size.transferSize;
+                valB = b.size.transferSize;
+                break;
+            case 'time':
+                valA = a.timing.total;
+                valB = b.timing.total;
+                break;
+            case 'protocol':
+                valA = a.protocol || '';
+                valB = b.protocol || '';
+                return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            case 'priority':
+                valA = a.priority || '';
+                valB = b.priority || '';
+                return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            default:
+                return 0;
+        }
+        
+        return ascending ? valA - valB : valB - valA;
+    });
+    
+    renderDetailsTable(filteredEntries);
 }
 
 function getStatusColor(status) {

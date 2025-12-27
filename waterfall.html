@@ -247,6 +247,57 @@
             color: white;
             border-color: var(--color-accent);
         }
+        
+        .request-details-table {
+            margin-top: 1rem;
+            overflow-x: auto;
+        }
+        
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .details-table th,
+        .details-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.9rem;
+        }
+        
+        .details-table th {
+            background: var(--color-bg-tertiary);
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .details-table th:hover {
+            background: rgba(114, 9, 183, 0.1);
+        }
+        
+        .details-table tbody tr:hover {
+            background: rgba(114, 9, 183, 0.05);
+        }
+        
+        .details-table .sort-icon {
+            font-size: 0.7rem;
+            margin-left: 0.3rem;
+            opacity: 0.5;
+        }
+        
+        .details-table th.sorted {
+            color: var(--color-accent);
+        }
+        
+        .details-table th.sorted .sort-icon {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -278,6 +329,9 @@
         </div>
         
         <div class="waterfall-canvas" id="waterfallCanvas"></div>
+        
+        <h2 style="margin-top: 3rem;">Request Details</h2>
+        <div class="request-details-table" id="requestDetailsTable"></div>
     </div>
     
     <div class="dialog-overlay" id="dialogOverlay"></div>
