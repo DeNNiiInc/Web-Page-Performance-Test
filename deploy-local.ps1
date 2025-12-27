@@ -18,7 +18,7 @@ if (-not (Test-Path "deploy-config.json")) {
 
 # Read configuration
 $Config = Get-Content "deploy-config.json" | ConvertFrom-Json
-$Host = $Config.host
+$ServerHost = $Config.host
 $Port = $Config.port
 $User = $Config.username
 $Pass = $Config.password
@@ -28,7 +28,7 @@ $AppName = $Config.appName
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "🚀 Starting Deployment Process" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "📡 Server: $User@$Host" -ForegroundColor White
+Write-Host "📡 Server: $User@$ServerHost" -ForegroundColor White
 Write-Host "📁 Remote Path: $RemotePath" -ForegroundColor White
 Write-Host ""
 
@@ -36,9 +36,10 @@ Write-Host ""
 Write-Host "🔍 Testing SSH connection..." -ForegroundColor Yellow
 $TestCmd = "echo 'Connection successful'"
 try {
-    echo y | plink -ssh -P $Port -pw $Pass "$User@$Host" $TestCmd 2>&1 | Out-Null
+    echo y | plink -ssh -P $Port -pw $Pass "$User@$ServerHost" $TestCmd 2>&1 | Out-Null
     Write-Host "✅ SSH connection successful!" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Failed to connect to server!" -ForegroundColor Red
     exit 1
 }
@@ -47,20 +48,20 @@ try {
 Write-Host ""
 Write-Host "📁 Creating remote directory..." -ForegroundColor Yellow
 $CreateDirCmd = "mkdir -p $RemotePath; apt-get update && apt-get install -y jq git"
-echo y | plink -ssh -P $Port -pw $Pass "$User@$Host" $CreateDirCmd
+echo y | plink -ssh -P $Port -pw $Pass "$User@$ServerHost" $CreateDirCmd
 
 # Upload deploy-config.json (temporarily, will be used then removed)
 Write-Host ""
 Write-Host "📤 Uploading configuration..." -ForegroundColor Yellow
-echo y | pscp -P $Port -pw $Pass "deploy-config.json" "$User@${Host}:${RemotePath}/deploy-config.json"
+echo y | pscp -P $Port -pw $Pass "deploy-config.json" "$User@${ServerHost}:${RemotePath}/deploy-config.json"
 
 # Upload deployment script
 Write-Host "📤 Uploading deployment script..." -ForegroundColor Yellow
-echo y | pscp -P $Port -pw $Pass "deploy-server.sh" "$User@${Host}:${RemotePath}/deploy-server.sh"
+echo y | pscp -P $Port -pw $Pass "deploy-server.sh" "$User@${ServerHost}:${RemotePath}/deploy-server.sh"
 
 # Upload auto-sync script
 Write-Host "📤 Uploading auto-sync script..." -ForegroundColor Yellow
-echo y | pscp -P $Port -pw $Pass "auto-sync.sh" "$User@${Host}:${RemotePath}/auto-sync.sh"
+echo y | pscp -P $Port -pw $Pass "auto-sync.sh" "$User@${ServerHost}:${RemotePath}/auto-sync.sh"
 
 # Make scripts executable and run deployment
 Write-Host ""
@@ -74,7 +75,7 @@ chmod +x deploy-server.sh auto-sync.sh
 rm -f deploy-config.json
 "@
 
-echo y | plink -ssh -P $Port -t -pw $Pass "$User@$Host" $DeployCmd
+echo y | plink -ssh -P $Port -t -pw $Pass "$User@$ServerHost" $DeployCmd
 
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan
@@ -82,7 +83,7 @@ Write-Host "✅ Deployment Complete!" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "📊 Next Steps:" -ForegroundColor Yellow
-Write-Host "  1. Test the application: http://$Host" -ForegroundColor White
+Write-Host "  1. Test the application: http://$ServerHost" -ForegroundColor White
 Write-Host "  2. Check service status: systemctl status $AppName" -ForegroundColor White
 Write-Host "  3. View auto-sync logs: tail -f /var/log/${AppName}-autosync.log" -ForegroundColor White
 Write-Host ""
