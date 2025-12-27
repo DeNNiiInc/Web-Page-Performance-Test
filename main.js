@@ -117,6 +117,11 @@ function displayResults(data) {
             window.open(`/waterfall.html?id=${data.id}`, '_blank');
         };
     }
+    
+    // Load content breakdown
+    if (typeof renderContentBreakdown === 'function') {
+        renderContentBreakdown(data.id);
+    }
 
     resultsArea.classList.add('visible');
     
