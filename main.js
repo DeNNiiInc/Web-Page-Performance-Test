@@ -163,7 +163,22 @@ function displayResults(data) {
         };
         document.getElementById('view-video').onclick = (e) => {
             e.preventDefault();
-            openVideoModal(data.filmstrip);
+            if (data.filmstrip && data.filmstrip.length > 0) {
+                openVideoModal(data.filmstrip);
+            } else {
+                alert('No video data available for this test.');
+            }
+        };
+        document.getElementById('view-images').onclick = (e) => {
+            e.preventDefault();
+            if (data.filmstrip && data.filmstrip.length > 0) {
+                 // Open images.html?id=... (Assuming logic exists, user requested it back)
+                 // Or reusing filmstrip display? User said "View Images function". 
+                 // Checking previous code: it opened `/images.html?id=${data.id}`
+                 window.open(`/images.html?id=${data.id}`, '_blank');
+            } else {
+                 alert('No images available.');
+            }
         };
     }
     
