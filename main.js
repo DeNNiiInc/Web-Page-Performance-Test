@@ -663,7 +663,7 @@ async function downloadVideo() {
         const stream = canvas.captureStream(10); // 10 FPS
         const recorder = new MediaRecorder(stream, {
             mimeType: selectedMimeType,
-            videoBitsPerSecond: 5000000 // Increased bitrate for 1080p
+            videoBitsPerSecond: 75000000 // 75 Mbps for high quality 1080p
         });
         
         const chunks = [];
