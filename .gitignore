@@ -209,3 +209,5 @@ coverage/
 # IGNORED DATA FOLDERS
 # ===========================================
 SAMPLE/
+
+!reset_password.sql
