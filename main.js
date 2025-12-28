@@ -68,8 +68,8 @@ async function runTest() {
             },
             body: JSON.stringify({ 
                 url: url,
-                url: url,
                 isMobile: currentDevice === 'mobile',
+                runs: parseInt(document.getElementById('run-count').value),
                 captureFilmstrip: captureFilmstrip
             })
         });
@@ -77,7 +77,17 @@ async function runTest() {
         if (!response.ok) throw new Error('Test failed to start');
 
         const data = await response.json();
-        displayResults(data);
+        // Handle multi-run immediate response
+        if (data.status === 'running' && data.suiteId) {
+             // Show progress for multi-run
+             document.getElementById('multi-run-progress').style.display = 'block';
+             pollSuiteStatus(data.suiteId, data.runs);
+             // Clear previous single result if any
+             document.getElementById('results-area').classList.remove('visible');
+        } else {
+             displayResults(data);
+        }
+        
         loadHistory(); // Refresh history
 
     } catch (error) {
@@ -172,9 +182,6 @@ function displayResults(data) {
         document.getElementById('view-images').onclick = (e) => {
             e.preventDefault();
             if (data.filmstrip && data.filmstrip.length > 0) {
-                 // Open images.html?id=... (Assuming logic exists, user requested it back)
-                 // Or reusing filmstrip display? User said "View Images function". 
-                 // Checking previous code: it opened `/images.html?id=${data.id}`
                  window.open(`/images.html?id=${data.id}`, '_blank');
             } else {
                  alert('No images available.');
@@ -274,6 +281,9 @@ async function loadHistory() {
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <button class="btn-secondary rerun-btn" data-url="${test.url}" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;" title="Rerun this test">
+                            🔄 Rerun
+                        </button>
                         <a href="/waterfall.html?id=${test.id}" target="_blank" class="btn-secondary" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;" title="View Waterfall">
                             📊 Waterfall
                         </a>
@@ -298,6 +308,23 @@ async function loadHistory() {
                 e.preventDefault();
                 const testId = e.target.dataset.testId;
                 await loadTestById(testId);
+            });
+        });
+
+        // Setup click handlers for Rerun buttons
+        document.querySelectorAll('.rerun-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = e.target.dataset.url;
+                
+                // Populate URL field
+                document.getElementById('test-url').value = url;
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Trigger run (this ensures it uses the current "Number of Runs" setting)
+                document.getElementById('run-btn').click();
             });
         });
 
