@@ -1,163 +1,198 @@
-# 🎯 Quick Start - Fill This Out First!
+# Web Performance Test - Quick Start Guide
 
-## Step 1: Gather Your Information
+This guide will help you deploy the Web Performance Test application in minutes.
 
-### 🖥️ Server Details (from Proxmox)
-- [ ] **Server IP Address**: `_____________________`
-- [ ] **Root Password**: `_____________________`
-- [ ] **SSH Port**: `22` (default)
+## 🚀 Quick Setup (3 Steps)
 
-### 🔑 GitHub Details
-- [ ] **GitHub Username**: `_____________________`
-- [ ] **Personal Access Token**: `_____________________ ` ([Create here](https://github.com/settings/tokens))
-  - ✅ Needs `repo` scope permissions
-- [ ] **Repository**: `DeNNiiInc/Web-Page-Performance-Test` (already set)
+### 1. Clone and Install
 
----
-
-## Step 2: Create deploy-config.json
-
-1. **Copy the template:**
-   ```powershell
-   Copy-Item deploy-config.TEMPLATE.json deploy-config.json
-   ```
-
-2. **Edit deploy-config.json** with your information from Step 1:
-   ```json
-   {
-     "host": "YOUR_SERVER_IP_HERE",
-     "port": 22,
-     "username": "root",
-     "password": "YOUR_ROOT_PASSWORD_HERE",
-     "remotePath": "/var/www/web-page-performance-test",
-     "appName": "web-page-performance-test",
-     "github": {
-       "username": "YOUR_GITHUB_USERNAME_HERE",
-       "token": "YOUR_GITHUB_TOKEN_HERE",
-       "repo": "DeNNiiInc/Web-Page-Performance-Test"
-     }
-   }
-   ```
-
----
-
-## Step 3: Deploy! (ONE COMMAND)
-
-```powershell
-.\deploy-local.ps1
-```
-
-That's it! ✅
-
----
-
-## ✅ What This Does Automatically
-
-1. ✅ Connects to your Proxmox server via SSH
-2. ✅ Clones your GitHub repository
-3. ✅ Installs Node.js dependencies
-4. ✅ Creates a systemd service (auto-start on boot)
-5. ✅ Configures Nginx reverse proxy (serves on port 80)
-6. ✅ Sets up auto-sync (checks GitHub every 5 minutes)
-7. ✅ Removes credentials from the server after setup
-
----
-
-## 🔄 After Deployment (How to Update)
-
-### Option 1: Automatic (Recommended)
-Just push to GitHub, wait 5 minutes, it updates automatically! No manual intervention needed.
-
-### Option 2: Force Update (Immediate)
 ```bash
-ssh root@YOUR_SERVER_IP
-cd /var/www/web-page-performance-test
-./auto-sync.sh
+git clone https://github.com/DeNNiiInc/Web-Page-Performance-Test.git
+cd Web-Page-Performance-Test
+npm install
 ```
 
----
+### 2. Configure Database
 
-## 📊 Useful Commands (SSH into server first)
+Create your database configuration file:
 
-### Check if app is running
 ```bash
-systemctl status web-page-performance-test
+cp lib/db-config.template.js lib/db-config.js
 ```
 
-### View app logs
+Edit `lib/db-config.js` with your PostgreSQL credentials:
+
+```javascript
+module.exports = {
+  host: 'YOUR_DATABASE_HOST',     // e.g., 'localhost' or '172.16.69.219'
+  user: 'postgres',               // Database username
+  password: 'YOUR_PASSWORD',      // Database password
+  database: 'webperformance',     // Database name
+  port: 5432,                     // Default PostgreSQL port
+};
+```
+
+### 3. Initialize Database
+
+Run the database initialization script:
+
 ```bash
-journalctl -u web-page-performance-test -f
+node lib/db.js
 ```
 
-### View auto-sync logs
+This will create the required database table and indexes.
+
+### 4. Start the Application
+
+#### Development Mode:
 ```bash
-tail -f /var/log/web-page-performance-test-autosync.log
+npm start
 ```
 
-### Restart app manually
+#### Production Mode (with PM2):
 ```bash
-systemctl restart web-page-performance-test
+npm install -g pm2
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup  # Follow the instructions to enable auto-start
 ```
 
----
+The application will be available at `http://localhost:3000`
 
-## 🆘 Troubleshooting
+## 📋 Prerequisites
 
-### "Connection refused" error
-- Check if server IP is correct
-- Check if SSH is running: `systemctl status ssh`
-- Try: `ping YOUR_SERVER_IP`
+- **Node.js** v14 or higher
+- **PostgreSQL** v12 or higher
+- **Chrome/Chromium** (installed automatically with puppeteer)
 
-### "Authentication failed" error
-- Double-check root password in `deploy-config.json`
-- Try manually: `ssh root@YOUR_SERVER_IP`
+## 🗄️ Database Setup
 
-### App deployed but not accessible
+If you need to set up PostgreSQL from scratch:
+
+### On Ubuntu/Debian:
 ```bash
-# Check if service is running
-systemctl status web-page-performance-test
-
-# Check if Nginx is running
-systemctl status nginx
-
-# Test locally on server
-curl http://localhost
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
 ```
 
----
+### Create Database:
+```bash
+sudo -u postgres psql
+```
 
-## 🎉 Success Checklist
+```sql
+CREATE DATABASE webperformance;
+ALTER USER postgres PASSWORD 'your_password_here';
+\q
+```
 
-After running `.\deploy-local.ps1`, you should see:
-- ✅ "SSH connection successful!"
-- ✅ "Deployment Complete!"
-- ✅ Visit `http://YOUR_SERVER_IP` in browser - your site loads!
-- ✅ Wait 5 minutes, make a change, push to GitHub, site updates automatically!
+### Configure Remote Access (if needed):
 
----
+Edit PostgreSQL configuration:
+```bash
+sudo nano /etc/postgresql/*/main/postgresql.conf
+```
 
-## 📁 Files You'll Edit
+Add or uncomment:
+```ini
+listen_addresses = '*'
+```
 
-- `deploy-config.json` - Your credentials (ONE TIME, never commit to Git)
-- `index.html` - Your HTML content (commit to Git)
-- `styles.css` - Your styles (commit to Git)
-- `script.js` - Your JavaScript (commit to Git)
+Edit access control:
+```bash
+sudo nano /etc/postgresql/*/main/pg_hba.conf
+```
 
----
+Add:
+```
+host all all 0.0.0.0/0 scram-sha-256
+```
 
-## 🔐 Security Notes
+Restart PostgreSQL:
+```bash
+sudo systemctl restart postgresql
+```
 
-- ✅ `deploy-config.json` is in `.gitignore` - will NEVER be pushed to GitHub
-- ✅ GitHub token is removed from server after initial clone
-- ✅ Server uses systemd (not PM2) for better security and reliability
-- ✅ Nginx serves static files (Node.js only handles API)
+## 🔧 Configuration
 
----
+### Environment Variables (Optional)
 
-## 📖 Need More Details?
+You can set these environment variables for additional configuration:
 
-Read the full guide: `DEPLOYMENT.md`
+- `PORT` - Server port (default: 3000)
+- `NODE_ENV` - Environment (development/production)
 
----
+### PM2 Configuration
 
-**Ready? Let's go! 🚀**
+The `ecosystem.config.js` file contains PM2 configuration. You can customize:
+- Instance name
+- Number of instances
+- Memory limits
+- Log locations
+
+## 📁 Project Structure
+
+```
+Web-Page-Performance-Test/
+├── server.js              # Express server
+├── index.html             # Main interface
+├── waterfall.html         # Network waterfall visualization
+├── images.html            # Filmstrip gallery
+├── compare.html           # Test comparison tool
+├── lib/                   # Core modules
+│   ├── runner.js          # Lighthouse test runner
+│   ├── db.js              # Database setup
+│   └── db-config.js       # Database credentials (not in git)
+├── migrations/            # Database migrations
+└── docs/                  # Additional documentation
+```
+
+## 🐛 Troubleshooting
+
+### Database Connection Issues
+
+**Error: `connect ECONNREFUSED`**
+- Verify PostgreSQL is running: `systemctl status postgresql`
+- Check database credentials in `lib/db-config.js`
+- Verify pg_hba.conf allows connection from your IP
+
+**Error: `password authentication failed`**
+- Reset PostgreSQL password:
+  ```bash
+  sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'new_password';"
+  ```
+
+### Chrome/Puppeteer Issues
+
+**Error: `Failed to launch chrome`**
+- Install required dependencies:
+  ```bash
+  sudo apt install -y chromium-browser chromium-chromedriver
+  ```
+
+### Port Already in Use
+
+**Error: `EADDRINUSE: address already in use`**
+- Change the port in `server.js` or:
+  ```bash
+  PORT=3001 npm start
+  ```
+
+## 📚 Additional Documentation
+
+- **Full Deployment Guide**: See `DEPLOYMENT.md`
+- **Proxmox Deployment**: See `PROXMOX_DEPLOY_TEMPLATE.md`
+- **API Documentation**: See `docs/API.md`
+
+## 🔒 Security Notes
+
+- Never commit `lib/db-config.js` to version control (it's in `.gitignore`)
+- Use strong passwords for database access
+- Consider restricting database access to specific IPs in production
+- Keep dependencies updated: `npm audit fix`
+
+## 📝 License
+
+GPL v3 - See LICENSE file for details
