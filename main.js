@@ -431,93 +431,19 @@ function getUserUuid() {
     return uuid;
 }
 
-// Multi-run progress polling
-async function pollSuiteStatus(suiteId, totalRuns) {
-    const pollInterval = setInterval(async () => {
-        try {
-            const response = await fetch(`/api/suite-status/${suiteId}`);
-            const suite = await response.json();
-            
-            // Update progress
-            const progress = (suite.completed_runs / suite.run_count) * 100;
-            document.getElementById('progress-fill').style.width = `${progress}%`;
-            document.getElementById('progress-text').textContent = 
-                `Run ${suite.completed_runs} of ${suite.run_count} completed...`;
-            
-            // Check if complete
-            if (suite.status === 'completed') {
-                clearInterval(pollInterval);
-                document.getElementById('progress-text').textContent = 'Calculating statistics...';
-                
-                // Display multi-run results
-                displayMultiRunResults(suite);
-                document.getElementById('multi-run-progress').style.display = 'none';
-            } else if (suite.status === 'failed') {
-                clearInterval(pollInterval);
-                throw new Error('Some test runs failed');
-            }
-        } catch (error) {
-            clearInterval(pollInterval);
-            console.error('Polling error:', error);
-            document.getElementById('error-msg').textContent = 'Error tracking progress: ' + error.message;
-            document.getElementById('error-msg').style.display = 'block';
-            document.getElementById('multi-run-progress').style.display = 'none';
-        }
-    }, 2000); // Poll every 2 seconds
+
+// ============================================================================
+// Identity Management
+// ============================================================================
+function getUserUuid() {
+    let uuid = localStorage.getItem('user-uuid');
+    if (!uuid) {
+        uuid = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('user-uuid', uuid);
+    }
+    return uuid;
 }
 
-function displayMultiRunResults(suite) {
-    // Show statistics summary
-    const statsHtml = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0;">
-            <div style="background: var(--color-bg-secondary); padding: 1.5rem; border-radius: 8px; text-align: center;">
-                <div style="font-size: 2rem; font-weight: 700; color: var(--color-accent);">${suite.median_performance_score?.toFixed(0) || 'N/A'}</div>
-                <div style="color: var(--color-text-secondary); margin-top: 0.5rem;">Median Performance</div>
-            </div>
-            <div style="background: var(--color-bg-secondary); padding: 1.5rem; border-radius: 8px; text-align: center;">
-                <div style="font-size: 2rem; font-weight: 700; color: var(--color-accent);">${suite.avg_performance_score?.toFixed(0) || 'N/A'}</div>
-                <div style="color: var(--color-text-secondary); margin-top: 0.5rem;">Average Performance</div>
-            </div>
-            <div style="background: var(--color-bg-secondary); padding: 1.5rem; border-radius: 8px; text-align: center;">
-                <div style="font-size: 2rem; font-weight: 700; color: var(--color-accent);">±${suite.stddev_performance_score?.toFixed(1) || 'N/A'}</div>
-                <div style="color: var(--color-text-secondary); margin-top: 0.5rem;">Std Deviation</div>
-            </div>
-        </div>
-        
-        <h3 style="margin-top: 2rem;">Individual Runs</h3>
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; background: var(--color-bg-secondary); border-radius: 8px;">
-                <thead>
-                    <tr style="background: var(--color-bg-tertiary);">
-                        <th style="padding: 1rem; text-align: left;">Run</th>
-                        <th style="padding: 1rem; text-align: center;">Performance</th>
-                        <th style="padding: 1rem; text-align: center;">LCP (ms)</th>
-                        <th style="padding: 1rem; text-align: center;">CLS</th>
-                        <th style="padding: 1rem; text-align: center;">TBT (ms)</th>
-                        <th style="padding: 1rem; text-align: center;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${suite.runs?.map(run => `
-                        <tr style="border-top: 1px solid var(--color-border); ${run.is_median ? 'background: rgba(114, 9, 183, 0.1);' : ''}">
-                            <td style="padding: 1rem;">#${run.run_number} ${run.is_median ? '⭐ Median' : ''}</td>
-                            <td style="padding: 1rem; text-align: center;">-</td>
-                            <td style="padding: 1rem; text-align: center;">-</td>
-                            <td style="padding: 1rem; text-align: center;">-</td>
-                            <td style="padding: 1rem; text-align: center;">-</td>
-                            <td style="padding: 1rem; text-align: center;">
-                                <a href="/waterfall.html?id=${run.test_id}" target="_blank" style="color: var(--color-accent);">View Details</a>
-                            </td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="6" style="padding: 1rem; text-align: center;">No run data available</td></tr>'}
-                </tbody>
-            </table>
-        </div>
-    `;
-    
-    document.getElementById('results-area').innerHTML = statsHtml;
-    document.getElementById('results-area').style.display = 'block';
-}
 
 function getUserUuid() {
     let uuid = localStorage.getItem('user_uuid');
