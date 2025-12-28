@@ -649,8 +649,13 @@ async function downloadVideo() {
         
         // We will generate a frame for every 1/30th of a second
         const frameInterval = 1000 / fps; // ~33.33ms
-        const totalOutputFrames = Math.ceil(totalDuration / frameInterval);
+        let totalOutputFrames = Math.ceil(totalDuration / frameInterval);
         
+        // Ensure at least one frame if duration is 0 or very small
+        if (totalOutputFrames <= 0) totalOutputFrames = 1;
+        
+        console.log(`Generating ${totalOutputFrames} output frames`);
+
         // Pre-load all images
         const loadedImages = await Promise.all(videoFrames.map(async frame => {
             const img = new Image();
@@ -663,6 +668,10 @@ async function downloadVideo() {
         }));
         
         const validImages = loadedImages.filter(i => i !== null);
+        
+        if (validImages.length === 0) {
+            throw new Error("Failed to load any source images");
+        }
         
         // Generate video frames
         for (let i = 0; i < totalOutputFrames; i++) {
@@ -685,14 +694,16 @@ async function downloadVideo() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Center and scale image (Contain)
-            const scale = Math.min(canvas.width / currentImage.img.width, canvas.height / currentImage.img.height);
-            const x = (canvas.width - currentImage.img.width * scale) / 2;
-            const y = (canvas.height - currentImage.img.height * scale) / 2;
-            
-            // Use high quality image smoothing
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(currentImage.img, x, y, currentImage.img.width * scale, currentImage.img.height * scale);
+            if (currentImage && currentImage.img) {
+                const scale = Math.min(canvas.width / currentImage.img.width, canvas.height / currentImage.img.height);
+                const x = (canvas.width - currentImage.img.width * scale) / 2;
+                const y = (canvas.height - currentImage.img.height * scale) / 2;
+                
+                // Use high quality image smoothing
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(currentImage.img, x, y, currentImage.img.width * scale, currentImage.img.height * scale);
+            }
             
             // Add timestamp overlay (crisp text)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -702,6 +713,7 @@ async function downloadVideo() {
             ctx.fillText(`${(currentTime / 1000).toFixed(1)}s`, 40, canvas.height - 35);
             
             // Add frame to encoder
+            // Note: add() might parse the webp immediately, so this must happen
             encoder.add(canvas);
             
             // Yield to UI thread occasionally to prevent freezing

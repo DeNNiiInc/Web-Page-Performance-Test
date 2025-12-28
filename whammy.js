@@ -208,16 +208,24 @@
          var height = tmp & 0x3FFF;
        }
        
-       // now we want to put the VP8 chunk into the RIFF
-       // we use valid RIFF structures: RIFF -> WEBP -> VP8
-       // but we only care about the VP8 chunk
-       // so we just throw it in there
-       //riff.RIFF[0].WEBP.push(vp8); // this won't work because it's not a valid RIFF stucture
-       
-       // we need to keep track of the duration of each frame
+       // Fix: Assign dimensions to the frame object so checkFrames can access them
+       if (typeof width !== 'undefined') {
+         frames[i].width = width;
+         frames[i].height = height;
+       } else {
+         // Copy from first frame if not the first iteration
+         frames[i].width = frames[0].width;
+         frames[i].height = frames[0].height;
+       }
+
        frames[i].data = vp8;
     }
     
+    // Safety check for empty frames
+    if (!frames || frames.length === 0) {
+        throw "No frames to compile";
+    }
+
     var info = checkFrames(frames);
     
     var CLUSTER_MAX_DURATION = 30000;
