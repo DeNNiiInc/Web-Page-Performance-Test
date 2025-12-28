@@ -233,6 +233,29 @@
         </footer>
     </div>
 
+
+    <!-- Video Player Modal -->
+    <div id="video-modal" class="modal">
+        <div class="modal-content video-modal-content">
+            <div class="modal-header">
+                <h2>Page Load Video</h2>
+                <button class="close-btn" onclick="closeVideoModal()">&times;</button>
+            </div>
+            <div class="video-player-container">
+                <div id="video-frame" class="video-frame">
+                    <img id="video-img" src="" alt="Video Frame">
+                </div>
+                <div class="video-controls">
+                    <button id="video-play-btn" onclick="toggleVideoPlay()">▶ Play</button>
+                    <div class="video-progress-bar">
+                        <div id="video-progress-fill" class="video-progress-fill"></div>
+                    </div>
+                    <span id="video-time">0.0s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Git Badge Scripts global must be before main -->
     <script src="git-badge.js"></script>
     <script src="breakdown.js"></script>
