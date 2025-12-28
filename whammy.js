@@ -372,8 +372,9 @@
         var clusterDuration = 0;
         
         do {
-            clusterFrames.push(frames.shift());
-            clusterDuration = frames.length > 0 ? (frames[0].duration + clusterDuration) : clusterDuration + frames[frames.length -1].duration;
+            var frame = frames.shift();
+            clusterFrames.push(frame);
+            clusterDuration += frame.duration;
         } while(frames.length > 0 && clusterDuration < CLUSTER_MAX_DURATION);
         
         var clusterConsole = [
