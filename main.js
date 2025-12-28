@@ -669,10 +669,9 @@ async function downloadVideo() {
             bitsPerSecond: 75000000, // Some browsers use this instead
         };
         
-        // Add quality parameter if supported (0-1 scale, 1 = highest)
+        // Add quality parameter if supported
         if (selectedMimeType.includes('webm')) {
-            recorderOptions.videoKeyFrameIntervalDuration = 100; // Keyframe every 100ms
-            recorderOptions.videoKeyFrameIntervalCount = 1; // More keyframes = better quality
+            recorderOptions.videoKeyFrameIntervalDuration = 100; // Keyframe every 100ms for better quality
         }
         
         const recorder = new MediaRecorder(stream, recorderOptions);
