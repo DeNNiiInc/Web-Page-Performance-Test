@@ -172,11 +172,9 @@ function displayResults(data) {
         };
         document.getElementById('view-images').onclick = (e) => {
             e.preventDefault();
-            if (data.filmstrip && data.filmstrip.length > 0) {
-                 window.open(`/images.html?id=${data.id}`, '_blank');
-            } else {
-                 alert('No images available.');
-            }
+            // Data might exist on server even if filmstrip array is empty in this object
+            console.log("Opening images page for test:", data.id);
+            window.open(`/images.html?id=${data.id}`, '_blank');
         };
     }
     
