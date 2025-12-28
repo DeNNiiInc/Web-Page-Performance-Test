@@ -1,10 +1,6 @@
 const { Pool } = require('pg');
 const config = require('./lib/db-config');
-const { v4: uuidv4 } = require('uuid');
-
-// Force localhost
-config.host = 'localhost';
-config.password = 'WebPerfTest2025';
+const crypto = require('crypto');
 
 const pool = new Pool(config);
 
@@ -13,7 +9,7 @@ async function testInsert() {
     const client = await pool.connect();
     
     try {
-        const testId = uuidv4();
+        const testId = crypto.randomUUID();
         const query = `
             INSERT INTO test_results (
                 id, url, user_uuid, is_mobile, 

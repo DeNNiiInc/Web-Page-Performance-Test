@@ -1,8 +1,5 @@
 const { Pool } = require('pg');
 const config = require('./lib/db-config');
-// Force localhost for server-side check
-config.host = 'localhost';
-config.password = 'WebPerfTest2025'; // Ensure password is explicit just in case
 const pool = new Pool(config);
 
 async function checkData() {
