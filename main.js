@@ -659,12 +659,26 @@ async function downloadVideo() {
             throw new Error('No supported video format found');
         }
         
-        // Setup MediaRecorder with supported format
-        const stream = canvas.captureStream(10); // 10 FPS
-        const recorder = new MediaRecorder(stream, {
+        // Setup MediaRecorder with supported format and force high quality
+        const stream = canvas.captureStream(30); // Increase to 30 FPS for smoother capture
+        
+        // MediaRecorder options - force maximum quality
+        const recorderOptions = {
             mimeType: selectedMimeType,
-            videoBitsPerSecond: 75000000 // 75 Mbps for high quality 1080p
-        });
+            videoBitsPerSecond: 75000000, // 75 Mbps
+            bitsPerSecond: 75000000, // Some browsers use this instead
+        };
+        
+        // Add quality parameter if supported (0-1 scale, 1 = highest)
+        if (selectedMimeType.includes('webm')) {
+            recorderOptions.videoKeyFrameIntervalDuration = 100; // Keyframe every 100ms
+            recorderOptions.videoKeyFrameIntervalCount = 1; // More keyframes = better quality
+        }
+        
+        const recorder = new MediaRecorder(stream, recorderOptions);
+        
+        console.log('MediaRecorder configured with:', recorderOptions);
+        console.log('Actual settings:', recorder.videoBitsPerSecond || 'not reported');
         
         const chunks = [];
         recorder.ondataavailable = e => {
@@ -723,8 +737,8 @@ async function downloadVideo() {
             ctx.font = 'bold 24px Arial';
             ctx.fillText(`${(videoFrames[i].timing / 1000).toFixed(1)}s`, 20, canvas.height - 20);
             
-            // Wait for frame duration (100ms = 10fps)
-            await new Promise(r => setTimeout(r, 100));
+            // Wait for frame duration (33ms = ~30fps)
+            await new Promise(r => setTimeout(r, 33));
         }
         
         // Stop recording after all frames are rendered
