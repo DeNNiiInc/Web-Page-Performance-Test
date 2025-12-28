@@ -1,1 +1,1 @@
-ALTER USER postgres PASSWORD 'X@gon2005!#$';
+ALTER USER postgres PASSWORD 'WebPerfTest2025';

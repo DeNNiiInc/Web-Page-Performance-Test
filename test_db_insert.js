@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Force localhost
 config.host = 'localhost';
-config.password = 'X@gon2005!#$';
+config.password = 'WebPerfTest2025';
 
 const pool = new Pool(config);
 
