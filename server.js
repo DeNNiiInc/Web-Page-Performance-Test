@@ -14,7 +14,7 @@ app.use('/reports', express.static(path.join(__dirname, 'reports')));
 
 // API Endpoint: Git Info
 app.get("/api/git-info", (req, res) => {
-  exec('/usr/bin/git log -1 --format="%H|%cr"', (error, stdout, stderr) => {
+  exec('git log -1 --format="%H|%cr"', (error, stdout, stderr) => {
     if (error) {
       console.error("Error getting git info:", error);
       console.error("Stderr:", stderr);
