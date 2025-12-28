@@ -633,33 +633,64 @@ async function downloadVideo() {
     downloadBtn.textContent = '⏳ Creating...';
     
     try {
-        // Create canvas for rendering
+        // Create canvas for rendering at 1080p
         const canvas = document.createElement('canvas');
-        canvas.width = 1280;
-        canvas.height = 720;
+        canvas.width = 1920;
+        canvas.height = 1080;
         const ctx = canvas.getContext('2d');
         
-        // Setup MediaRecorder
+        // Try different codec options for browser compatibility
+        const mimeTypes = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+            'video/mp4'
+        ];
+        
+        let selectedMimeType = '';
+        for (const mimeType of mimeTypes) {
+            if (MediaRecorder.isTypeSupported(mimeType)) {
+                selectedMimeType = mimeType;
+                break;
+            }
+        }
+        
+        if (!selectedMimeType) {
+            throw new Error('No supported video format found');
+        }
+        
+        // Setup MediaRecorder with supported format
         const stream = canvas.captureStream(10); // 10 FPS
         const recorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm;codecs=vp9',
-            videoBitsPerSecond: 2500000
+            mimeType: selectedMimeType,
+            videoBitsPerSecond: 5000000 // Increased bitrate for 1080p
         });
         
         const chunks = [];
-        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.ondataavailable = e => {
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+            }
+        };
         
         recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
+            const blob = new Blob(chunks, { type: selectedMimeType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `page-load-${Date.now()}.webm`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
             downloadBtn.disabled = false;
             downloadBtn.textContent = '⬇ Download';
+        };
+        
+        recorder.onerror = (e) => {
+            console.error('MediaRecorder error:', e);
+            throw new Error('Recording failed');
         };
         
         recorder.start();
@@ -667,28 +698,41 @@ async function downloadVideo() {
         // Render frames
         for (let i = 0; i < videoFrames.length; i++) {
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // Handle CORS
+            
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
-                img.onerror = reject;
+                img.onerror = () => reject(new Error('Failed to load frame'));
                 img.src = videoFrames[i].data;
             });
             
+            // Black background
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
+            // Center and scale image
             const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
             const x = (canvas.width - img.width * scale) / 2;
             const y = (canvas.height - img.height * scale) / 2;
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
             
-            await new Promise(r => setTimeout(r, 100)); // 100ms per frame = 10fps
+            // Add timestamp overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, canvas.height - 50, 200, 40);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(`${(videoFrames[i].timing / 1000).toFixed(1)}s`, 20, canvas.height - 20);
+            
+            // Wait for frame duration (100ms = 10fps)
+            await new Promise(r => setTimeout(r, 100));
         }
         
+        // Stop recording after all frames are rendered
         recorder.stop();
         
     } catch (error) {
         console.error('Video download error:', error);
-        alert('Failed to create video. Your browser may not support this feature.');
+        alert(`Failed to create video: ${error.message}\n\nYour browser may not support this feature. Try using Chrome or Edge.`);
         downloadBtn.disabled = false;
         downloadBtn.textContent = '⬇ Download';
     }
