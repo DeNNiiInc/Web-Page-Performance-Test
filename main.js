@@ -696,86 +696,71 @@ async function downloadVideo() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-        // Calculate total duration from the last frame's timing
+            
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '⬇ Download';
+        };
+        
+        recorder.onerror = (e) => {
+            console.error('MediaRecorder error:', e);
+            throw new Error('Recording failed');
+        };
+        
+        // Start with timeslice to ensure proper chunking and duration
+        recorder.start(100); // Request data every 100ms
+        
+        // Calculate frame duration based on filmstrip timing
         const totalDuration = videoFrames[videoFrames.length - 1].timing;
-        console.log(`Compiling video: ${videoFrames.length} source frames, total ${totalDuration}ms`);
+        const frameDuration = totalDuration / videoFrames.length;
         
-        // We will generate a frame for every 1/30th of a second
-        const frameInterval = 1000 / fps; // ~33.33ms
-        const totalOutputFrames = Math.ceil(totalDuration / frameInterval);
+        console.log(`Rendering ${videoFrames.length} frames over ${totalDuration}ms (${frameDuration}ms per frame)`);
         
-        // Pre-load all images
-        const loadedImages = await Promise.all(videoFrames.map(async frame => {
+        // Render frames with proper timing
+        for (let i = 0; i < videoFrames.length; i++) {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            return new Promise((resolve, reject) => {
-                img.onload = () => resolve({ img, timing: frame.timing });
-                img.onerror = () => resolve(null); // Skip failed frames
-                img.src = frame.data;
+            
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => reject(new Error('Failed to load frame'));
+                img.src = videoFrames[i].data;
             });
-        }));
-        
-        const validImages = loadedImages.filter(i => i !== null);
-        
-        // Generate video frames
-        for (let i = 0; i < totalOutputFrames; i++) {
-            const currentTime = i * frameInterval;
             
-            // Find the image that should be displayed at this time
-            // It's the latest image whose timing is <= currentTime
-            let currentImage = validImages[0];
-            for (let j = 0; j < validImages.length; j++) {
-                if (validImages[j].timing <= currentTime) {
-                    currentImage = validImages[j];
-                } else {
-                    break;
-                }
+            // Render this frame multiple times to fill the duration
+            const renderCount = Math.max(1, Math.ceil(frameDuration / 33)); // 33ms per render at 30fps
+            
+            for (let r = 0; r < renderCount; r++) {
+                // Black background
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Center and scale image
+                const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                const x = (canvas.width - img.width * scale) / 2;
+                const y = (canvas.height - img.height * scale) / 2;
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                
+                // Add timestamp overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(10, canvas.height - 50, 200, 40);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText(`${(videoFrames[i].timing / 1000).toFixed(1)}s`, 20, canvas.height - 20);
+                
+                // Wait for next frame at 30fps
+                await new Promise(r => setTimeout(r, 33));
             }
-            
-            // Draw frame
-            // Clear and draw black background
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Center and scale image (Contain)
-            const scale = Math.min(canvas.width / currentImage.img.width, canvas.height / currentImage.img.height);
-            const x = (canvas.width - currentImage.img.width * scale) / 2;
-            const y = (canvas.height - currentImage.img.height * scale) / 2;
-            
-            // Use high quality image smoothing
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(currentImage.img, x, y, currentImage.img.width * scale, currentImage.img.height * scale);
-            
-            // Add timestamp overlay (crisp text)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(20, canvas.height - 70, 220, 50);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 32px Arial'; 
-            ctx.fillText(`${(currentTime / 1000).toFixed(1)}s`, 40, canvas.height - 35);
-            
-            // Add frame to encoder
-            encoder.add(canvas);
-            
-            // Yield to UI thread occasionally to prevent freezing
-            if (i % 15 === 0) await new Promise(r => setTimeout(r, 0));
         }
-
-        // Compile and download
-        const outputBlob = encoder.compile();
-        const url = URL.createObjectURL(outputBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `page-load-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        
+        // Add a small delay before stopping to ensure all data is captured
+        await new Promise(r => setTimeout(r, 200));
+        
+        // Stop recording after all frames are rendered
+        recorder.stop();
         
     } catch (error) {
         console.error('Video download error:', error);
         alert(`Failed to create video: ${error.message}\n\nYour browser may not support this feature. Try using Chrome or Edge.`);
-    } finally {
         downloadBtn.disabled = false;
         downloadBtn.textContent = '⬇ Download';
     }
