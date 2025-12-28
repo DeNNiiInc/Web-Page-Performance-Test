@@ -706,12 +706,19 @@ async function downloadVideo() {
             throw new Error('Recording failed');
         };
         
-        recorder.start();
+        // Start with timeslice to ensure proper chunking and duration
+        recorder.start(100); // Request data every 100ms
         
-        // Render frames
+        // Calculate frame duration based on filmstrip timing
+        const totalDuration = videoFrames[videoFrames.length - 1].timing;
+        const frameDuration = totalDuration / videoFrames.length;
+        
+        console.log(`Rendering ${videoFrames.length} frames over ${totalDuration}ms (${frameDuration}ms per frame)`);
+        
+        // Render frames with proper timing
         for (let i = 0; i < videoFrames.length; i++) {
             const img = new Image();
-            img.crossOrigin = 'anonymous'; // Handle CORS
+            img.crossOrigin = 'anonymous';
             
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
@@ -719,26 +726,34 @@ async function downloadVideo() {
                 img.src = videoFrames[i].data;
             });
             
-            // Black background
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Render this frame multiple times to fill the duration
+            const renderCount = Math.max(1, Math.ceil(frameDuration / 33)); // 33ms per render at 30fps
             
-            // Center and scale image
-            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-            const x = (canvas.width - img.width * scale) / 2;
-            const y = (canvas.height - img.height * scale) / 2;
-            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-            
-            // Add timestamp overlay
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(10, canvas.height - 50, 200, 40);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px Arial';
-            ctx.fillText(`${(videoFrames[i].timing / 1000).toFixed(1)}s`, 20, canvas.height - 20);
-            
-            // Wait for frame duration (33ms = ~30fps)
-            await new Promise(r => setTimeout(r, 33));
+            for (let r = 0; r < renderCount; r++) {
+                // Black background
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Center and scale image
+                const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                const x = (canvas.width - img.width * scale) / 2;
+                const y = (canvas.height - img.height * scale) / 2;
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                
+                // Add timestamp overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(10, canvas.height - 50, 200, 40);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText(`${(videoFrames[i].timing / 1000).toFixed(1)}s`, 20, canvas.height - 20);
+                
+                // Wait for next frame at 30fps
+                await new Promise(r => setTimeout(r, 33));
+            }
         }
+        
+        // Add a small delay before stopping to ensure all data is captured
+        await new Promise(r => setTimeout(r, 200));
         
         // Stop recording after all frames are rendered
         recorder.stop();
