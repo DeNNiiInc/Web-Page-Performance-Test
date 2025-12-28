@@ -69,7 +69,7 @@ async function runTest() {
             body: JSON.stringify({ 
                 url: url,
                 isMobile: currentDevice === 'mobile',
-                runs: parseInt(document.getElementById('run-count').value),
+                runs: 1,
                 captureFilmstrip: captureFilmstrip
             })
         });
@@ -77,16 +77,7 @@ async function runTest() {
         if (!response.ok) throw new Error('Test failed to start');
 
         const data = await response.json();
-        // Handle multi-run immediate response
-        if (data.status === 'running' && data.suiteId) {
-             // Show progress for multi-run
-             document.getElementById('multi-run-progress').style.display = 'block';
-             pollSuiteStatus(data.suiteId, data.runs);
-             // Clear previous single result if any
-             document.getElementById('results-area').classList.remove('visible');
-        } else {
-             displayResults(data);
-        }
+        displayResults(data);
         
         loadHistory(); // Refresh history
 
