@@ -714,12 +714,12 @@ body::before {
 .modal-content {
     position: relative;
     background: var(--color-bg-secondary);
-    margin: 5% auto;
+    margin: 3% auto;
     padding: 0;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
-    width: 90%;
-    max-width: 900px;
+    width: 95%;
+    max-width: 1400px;
     box-shadow: var(--shadow-lg);
     animation: slideIn 0.3s ease-out;
 }
@@ -769,7 +769,7 @@ body::before {
 }
 
 .video-modal-content {
-    max-width: 800px;
+    max-width: 1200px;
     background: var(--color-bg-secondary);
 }
 

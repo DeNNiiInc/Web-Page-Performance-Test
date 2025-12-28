@@ -622,6 +622,78 @@ function updateVideoFrame() {
     document.getElementById('video-progress-fill').style.width = `${progress}%`;
 }
 
+async function downloadVideo() {
+    if (!videoFrames || videoFrames.length === 0) {
+        alert('No video data to download');
+        return;
+    }
+    
+    const downloadBtn = document.getElementById('video-download-btn');
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = '⏳ Creating...';
+    
+    try {
+        // Create canvas for rendering
+        const canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 720;
+        const ctx = canvas.getContext('2d');
+        
+        // Setup MediaRecorder
+        const stream = canvas.captureStream(10); // 10 FPS
+        const recorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp9',
+            videoBitsPerSecond: 2500000
+        });
+        
+        const chunks = [];
+        recorder.ondataavailable = e => chunks.push(e.data);
+        
+        recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `page-load-${Date.now()}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '⬇ Download';
+        };
+        
+        recorder.start();
+        
+        // Render frames
+        for (let i = 0; i < videoFrames.length; i++) {
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = videoFrames[i].data;
+            });
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+            const x = (canvas.width - img.width * scale) / 2;
+            const y = (canvas.height - img.height * scale) / 2;
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+            
+            await new Promise(r => setTimeout(r, 100)); // 100ms per frame = 10fps
+        }
+        
+        recorder.stop();
+        
+    } catch (error) {
+        console.error('Video download error:', error);
+        alert('Failed to create video. Your browser may not support this feature.');
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = '⬇ Download';
+    }
+}
+
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
