@@ -3,105 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Comparison - Web Page Performance Test</title>
+    <title>Visual Comparison - Web Page Performance Test</title>
     <link rel="icon" type="image/png" href="Logo.png">
-    <link rel="stylesheet" href="styles.css?v=3.0">
+    <link rel="stylesheet" href="styles.css?v=2.2">
     <style>
         .comparison-container {
-            max-width: 1600px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .metric-diff {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem;
-            border-bottom: 1px solid var(--color-border);
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-
-        .diff-better { color: var(--color-accent-success); font-weight: bold; }
-        .diff-worse { color: var(--color-accent-error); font-weight: bold; }
-        .diff-neutral { color: var(--color-text-secondary); }
-
-        .filmstrip-row {
+        .video-wrapper {
+            margin-top: 2rem;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+        }
+        video {
+            max-width: 100%;
+            display: block;
+        }
+        .labels {
             display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
+            width: 100%;
+            justify-content: space-around;
             padding: 1rem 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--color-text-primary);
         }
-
-        .filmstrip-img {
-            height: 100px;
-            border: 1px solid var(--color-border);
+        .loading-state {
+            margin-top: 4rem;
+            text-align: center;
         }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-top: 5px solid var(--color-accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="Logo.png" alt="Logo" class="logo">
-            <h1>Test Comparison</h1>
-        </div>
-        <a href="/" class="btn-secondary">← Back to Dashboard</a>
-    </header>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Visual Comparison</h1>
+            <p class="subtitle">Side-by-Side Video Analysis</p>
+        </header>
 
-    <div class="comparison-container">
-        <div id="loading" style="text-align: center; padding: 2rem;">Loading comparison...</div>
-        
-        <div id="comparison-content" style="display: none;">
-            <div class="comparison-grid">
-                <!-- Test A -->
-                <div class="test-column" id="col-a">
-                    <h2 id="title-a">Test A</h2>
-                    <div class="card">
-                        <div id="meta-a"></div>
-                        <div class="grade-circle" id="grade-a">
-                            <span class="grade-letter"></span>
-                        </div>
-                    </div>
-                    <div id="filmstrip-a" class="filmstrip-row"></div>
-                </div>
-
-                <!-- Test B -->
-                <div class="test-column" id="col-b">
-                    <h2 id="title-b">Test B</h2>
-                    <div class="card">
-                        <div id="meta-b"></div>
-                        <div class="grade-circle" id="grade-b">
-                            <span class="grade-letter"></span>
-                        </div>
-                    </div>
-                    <div id="filmstrip-b" class="filmstrip-row"></div>
-                </div>
+        <div class="comparison-container">
+            <div id="loading" class="loading-state">
+                <div class="spinner"></div>
+                <h2>Generating Comparison Video...</h2>
+                <p style="color: var(--color-text-tertiary)">This requires processing video frames on the server. Please wait.</p>
             </div>
 
-            <!-- Metrics Diff Table -->
-            <div class="card" style="margin-top: 2rem;">
-                <h3>Metrics Comparison</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Test A</th>
-                            <th>Test B</th>
-                            <th>Difference</th>
-                        </tr>
-                    </thead>
-                    <tbody id="metrics-body"></tbody>
-                </table>
+            <div id="result" style="display: none; width: 100%;">
+                <div class="labels">
+                    <div id="label-left">Test A</div>
+                    <div id="label-right">Test B</div>
+                </div>
+                <div class="video-wrapper">
+                    <video id="comparison-video" controls autoplay loop playsinline>
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                     <a href="/" class="btn-secondary">⬅ Back to Dashboard</a>
+                     <a href="#" id="download-link" class="btn-primary" download="comparison.mp4">⬇ Download Video</a>
+                </div>
+            </div>
+            
+            <div id="error" style="display: none; color: var(--color-accent-danger); text-align: center; margin-top: 2rem;">
+                <h3>Error Generating Comparison</h3>
+                <p id="error-msg"></p>
+                <a href="/" class="btn-secondary" style="margin-top: 1rem;">Back</a>
             </div>
         </div>
     </div>
 
-    <script src="compare.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const test1 = params.get('test1');
+            const test2 = params.get('test2');
+
+            if (!test1 || !test2) {
+                showError('Missing test IDs in URL parameters.');
+                return;
+            }
+
+            // Update Labels (Optional: fetch test details to show URLs)
+            // For now just show IDs or generic labels
+            document.getElementById('label-left').textContent = `Test ${test1.substring(0, 8)}...`;
+            document.getElementById('label-right').textContent = `Test ${test2.substring(0, 8)}...`;
+
+            try {
+                // Fetch info to get URLs (optional enhancement)
+                // const [res1, res2] = await Promise.all([fetch('/reports/'+test1+'.json'), fetch('/reports/'+test2+'.json')]);
+                // ... logic to get URLs ...
+
+                const videoSrc = `/api/compare?test1=${test1}&test2=${test2}`;
+                const videoEl = document.getElementById('comparison-video');
+                
+                // We set the src. The browser will try to load it. 
+                // Since the API generates it on the fly, it might take a moment before the first byte.
+                // However, <video> tag handles buffering. 
+                // But if the server takes 10s to RESPOND, the browser might timeout or show error.
+                // Better approach: fetch the blob, then show.
+                
+                const response = await fetch(videoSrc);
+                if (!response.ok) throw new Error('Server failed to generate video.');
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                videoEl.src = url;
+                document.getElementById('download-link').href = url;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                
+            } catch (e) {
+                showError(e.message);
+            }
+        });
+
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-msg').textContent = msg;
+        }
+    </script>
 </body>
 </html>

@@ -41,6 +41,19 @@ fi
 if ! command -v git &> /dev/null; then
     echo "📦 Installing git..."
     apt-get update && apt-get install -y git
+    apt-get update && apt-get install -y git
+fi
+
+# Install ffmpeg if not present
+if ! command -v ffmpeg &> /dev/null; then
+    echo "📦 Installing ffmpeg..."
+    apt-get update && apt-get install -y ffmpeg
+fi
+
+# Install traceroute if not present
+if ! command -v traceroute &> /dev/null; then
+    echo "📦 Installing traceroute..."
+    apt-get update && apt-get install -y traceroute
 fi
 
 # Create app directory

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Network Traceroute - Web Page Performance Test</title>
+    <link rel="icon" type="image/png" href="Logo.png" />
+    <link rel="stylesheet" href="styles.css?v=2.2" />
+    <!-- Leaflet CSS for Map -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        margin-top: 1rem;
+      }
+      .terminal-output {
+        background: #1e1e1e;
+        color: #0f0;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .hop-list {
+        list-style: none;
+        padding: 0;
+      }
+      .hop-item {
+        padding: 0.5rem;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+      }
+      .hop-geo {
+        color: #888;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header (Shared) -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="title">
+            <img src="Logo.png" alt="BCT Logo" class="title-icon" />
+            Network Path Analysis
+          </h1>
+          <p class="subtitle">Traceroute & Geolocation</p>
+          <!-- Navigation -->
+          <nav style="margin-left: auto; display: flex; gap: 1rem">
+            <a
+              href="/"
+              class="button"
+              style="color: white; text-decoration: none"
+              >⬅ Back to Speed Test</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-icon">🌍</div>
+            <h2 class="panel-title">Trace Remote Host</h2>
+          </div>
+
+          <div class="launcher-form">
+            <div class="form-group">
+              <label class="form-label" for="trace-host">Hostname or IP</label>
+              <input
+                type="text"
+                id="trace-host"
+                class="form-input"
+                placeholder="google.com"
+                required
+              />
+            </div>
+            <button
+              id="trace-btn"
+              class="btn-primary"
+              onclick="runTraceroute()"
+            >
+              <span>Run Traceroute</span>
+              <div
+                id="loading-spinner"
+                class="loading-spinner"
+                style="display: none"
+              ></div>
+            </button>
+            <p
+              id="error-msg"
+              style="color: var(--color-accent-danger); display: none"
+            ></p>
+          </div>
+        </div>
+
+        <div id="results-area" class="results-container" style="display: none">
+          <h3>Path Visualization</h3>
+          <div id="map"></div>
+
+          <h3>Raw Output</h3>
+          <div id="terminal-output" class="terminal-output"></div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <p>&copy; 2025 Beyond Cloud Technology.</p>
+      </footer>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <script>
+      let map = null;
+
+      async function runTraceroute() {
+        const host = document.getElementById("trace-host").value;
+        const btn = document.getElementById("trace-btn");
+        const spinner = document.getElementById("loading-spinner");
+        const errorMsg = document.getElementById("error-msg");
+        const resultsArea = document.getElementById("results-area");
+        const terminal = document.getElementById("terminal-output");
+
+        if (!host) return;
+
+        // UI Reset
+        btn.disabled = true;
+        spinner.style.display = "block";
+        errorMsg.style.display = "none";
+        resultsArea.style.display = "none";
+        terminal.textContent =
+          "Tracing... please wait (this can take up to 60s)...";
+
+        try {
+          const response = await fetch("/api/traceroute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ host }),
+          });
+
+          const data = await response.json();
+
+          if (data.error) throw new Error(data.details || data.error);
+
+          // Show Results
+          resultsArea.style.display = "block";
+          terminal.textContent = data.output;
+
+          initMap(data.hops);
+        } catch (err) {
+          errorMsg.textContent = err.message;
+          errorMsg.style.display = "block";
+          terminal.textContent = "Error occurred.";
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      }
+
+      function initMap(hops) {
+        if (map) {
+          map.remove(); // Reset map
+        }
+
+        // Initialize map (center on 0,0 default, or first hop)
+        map = L.map("map").setView([20, 0], 2);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "© OpenStreetMap",
+        }).addTo(map);
+
+        const latlngs = [];
+
+        hops.forEach((hop) => {
+          if (hop.lat && hop.lon) {
+            const coord = [hop.lat, hop.lon];
+            latlngs.push(coord);
+
+            L.marker(coord)
+              .addTo(map)
+              .bindPopup(
+                `<b>${hop.ip}</b><br>${hop.city || ""}, ${hop.country || ""}`
+              );
+          }
+        });
+
+        if (latlngs.length > 0) {
+          const polyline = L.polyline(latlngs, { color: "red" }).addTo(map);
+          map.fitBounds(polyline.getBounds());
+        }
+      }
+    </script>
+  </body>
+</html>

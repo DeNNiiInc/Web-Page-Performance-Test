@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const { exec } = require("child_process");
 const runner = require("./lib/runner");
+const { traceAndLocate } = require("./lib/diagnostics/traceroute");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,17 +100,72 @@ app.get("*", (req, res) => {
 });
 
 // API Endpoint: Traceroute
-app.get("/api/traceroute", (req, res) => {
-  const { host } = req.query;
+// API Endpoint: Traceroute
+app.post("/api/traceroute", async (req, res) => {
+  const { host } = req.body;
   if (!host) return res.status(400).json({ error: "Host required" });
 
-  // Sanitize host to prevent injection (basic)
-  if (/[^a-zA-Z0-9.-]/.test(host)) return res.status(400).json({ error: "Invalid host" });
+  try {
+    const { raw, hops } = await traceAndLocate(host);
+    res.json({ output: raw, hops });
+  } catch (error) {
+    console.error("Traceroute error:", error);
+    res.status(500).json({ error: "Traceroute failed", details: error.message });
+  }
+});
 
-  const cmd = process.platform === 'win32' ? `tracert -h 10 ${host}` : `traceroute -m 10 ${host}`;
-  exec(cmd, (error, stdout, stderr) => {
-    res.json({ output: stdout || stderr });
-  });
+// API Endpoint: Compare Videos
+app.get("/api/compare", async (req, res) => {
+    const { test1, test2 } = req.query;
+    if (!test1 || !test2) return res.status(400).send("Missing test IDs");
+
+    const reportDir = path.join(__dirname, 'reports');
+    
+    // Helper to get frames
+    const getFrames = (id) => {
+        const p = path.join(reportDir, `${id}.json`);
+        if (!fs.existsSync(p)) return null;
+        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return data.filmstrip;
+    };
+
+    try {
+        const frames1 = getFrames(test1);
+        const frames2 = getFrames(test2);
+
+        if (!frames1 || !frames2) return res.status(404).send("Test results not found or missing filmstrip");
+
+        // Dynamically import generator and stitcher
+        const { createVideoFromFrames } = require('./lib/comparison/video-generator');
+        const { stitchVideos } = require('./lib/comparison/stitcher');
+
+        // Generate individual videos
+        // We assume 10 FPS as per capture logic
+        const [video1, video2] = await Promise.all([
+            createVideoFromFrames(frames1, 10),
+            createVideoFromFrames(frames2, 10)
+        ]);
+
+        // Stitch them
+        const outputFilename = `comparison-${test1}-${test2}.mp4`;
+        const outputPath = path.join(reportDir, outputFilename);
+        
+        await stitchVideos(video1, video2, outputPath);
+
+        // Cleanup temp individual videos
+        try { fs.unlinkSync(video1); fs.unlinkSync(video2); } catch(e) {}
+
+        // Stream output
+        res.setHeader('Content-Type', 'video/mp4');
+        const stream = fs.createReadStream(outputPath);
+        stream.pipe(res);
+
+        // Optional: Cleanup comparison file after streaming? 
+        // Or keep it cached. For now, keep it.
+    } catch (err) {
+        console.error("Comparison error:", err);
+        res.status(500).send("Comparison failed");
+    }
 });
 
 // API Endpoint: Bulk Test

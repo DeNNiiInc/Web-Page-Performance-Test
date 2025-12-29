@@ -28,6 +28,10 @@
                     </svg>
                     Watch on YouTube @beyondcloudtechnology
                 </a>
+                <!-- Navigation -->
+                <nav style="margin-top: 0.5rem;">
+                    <a href="traceroute.html" class="button" style="color:var(--color-text-primary); text-decoration:none; margin-right: 1rem;">🌍 Network Trace</a>
+                </nav>
             </div>
             <div class="header-controls">
                 <!-- Theme toggle or other controls can go here -->
@@ -104,6 +108,22 @@
                                 <div class="score-label">Structure</div>
                                 <div class="score-value" id="structure-score">-</div>
                             </div>
+                        </div>
+
+                        <!-- Carbon Section -->
+                        <div id="carbon-card" class="dashboard-card carbon-card" style="display: none;">
+                            <h3>Carbon Footprint</h3>
+                            <div class="carbon-grid">
+                                <div class="carbon-item">
+                                    <div class="carbon-label">CO2 per Visit</div>
+                                    <div class="carbon-value" id="carbon-co2">-</div>
+                                </div>
+                                <div class="carbon-item">
+                                    <div class="carbon-label">Eco Rating</div>
+                                    <div class="carbon-value" id="carbon-rating">-</div>
+                                </div>
+                            </div>
+                            <div id="carbon-badge" class="carbon-badge">-</div>
                         </div>
 
                         <!-- Vitals Section -->

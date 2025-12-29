@@ -124,6 +124,18 @@ function displayResults(data) {
     document.getElementById('performance-score').textContent = perfScore + '%';
     document.getElementById('structure-score').textContent = structureScore + '%';
     
+    // Carbon Footprint
+    if (data.metrics.carbon) {
+        document.getElementById('carbon-card').style.display = 'flex';
+        document.getElementById('carbon-co2').textContent = data.metrics.carbon.co2 + 'g';
+        document.getElementById('carbon-rating').textContent = data.metrics.carbon.rating;
+        const isGreen = data.metrics.carbon.isGreen;
+        const badge = document.getElementById('carbon-badge');
+        badge.textContent = isGreen ? '🌱 Hosted Green' : '⛔ Non-Green Host';
+        badge.style.background = isGreen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+        badge.style.color = isGreen ? 'var(--color-accent-success)' : 'var(--color-accent-danger)';
+    }
+    
     // Web Vitals
     const lcpVal = data.metrics.lcp < 1000 ? (data.metrics.lcp/1000).toFixed(2) + 's' : Math.round(data.metrics.lcp) + 'ms';
     const tbtVal = Math.round(data.metrics.tbt) + 'ms';
@@ -278,6 +290,9 @@ async function loadHistory() {
                         </a>
                         <a href="/reports/${test.id}.html" target="_blank" class="btn-secondary" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;">
                             View Report
+                        </a>
+                        <a href="/vitals.html?id=${test.id}" class="btn-secondary" style="margin:0; padding: 0.25rem 0.75rem; font-size: 0.75rem;" title="Deep Dive Analysis">
+                            ⚡ Vitals
                         </a>
                         <div class="${colorClass}" style="font-weight: 700; font-size: 1.25rem">
                             ${perfScore}

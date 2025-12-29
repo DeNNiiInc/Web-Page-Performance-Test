@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Web Vitals - Web Page Performance Test</title>
+    <link rel="icon" type="image/png" href="Logo.png">
+    <link rel="stylesheet" href="styles.css?v=2.2">
+    <style>
+        .vitals-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .metric-block {
+            background: var(--color-bg-tertiary);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 2rem;
+        }
+        .metric-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.5rem;
+        }
+        .lcp-element-box {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            overflow-x: auto;
+            color: #a5d6ff;
+        }
+        .cls-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .cls-table th, .cls-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .cls-table th { color: var(--color-text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Advanced Vitals Analysis</h1>
+            <nav>
+                <a href="/" class="btn-secondary">⬅ Dashboard</a>
+            </nav>
+        </header>
+
+        <div class="vitals-container" id="content-area">
+            <div id="loading" style="text-align: center;">Loading Vitals Data...</div>
+            
+            <!-- LCP Section -->
+            <div id="lcp-section" class="metric-block" style="display:none;">
+                <h2 class="metric-title">Largest Contentful Paint (LCP)</h2>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>LCP Element</h3>
+                        <div id="lcp-element-code" class="lcp-element-box"></div>
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>Details</h3>
+                        <p><strong>Load Time:</strong> <span id="lcp-time" style="color: var(--color-accent); font-weight: bold;"></span></p>
+                        <p><strong>Phase Breakdown:</strong></p>
+                        <ul id="lcp-phases" style="list-style: none; padding-left: 0.5rem; line-height: 1.8;"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLS Section -->
+            <div id="cls-section" class="metric-block" style="display:none;">
+                <h2 class="metric-title">Cumulative Layout Shift (CLS)</h2>
+                <h3>Shift Events</h3>
+                <table class="cls-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Score</th>
+                            <th>Moved Elements</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cls-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Long Tasks Section -->
+            <div id="tbt-section" class="metric-block" style="display:none;">
+                <h2 class="metric-title">Total Blocking Time (TBT) & Long Tasks</h2>
+                <div id="long-tasks-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+
+            if (!id) {
+                document.getElementById('loading').textContent = 'No Test ID provided.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/reports/${id}.json`);
+                if (!response.ok) throw new Error('Report not found');
+                const data = await response.json();
+                
+                renderVitals(data);
+            } catch (e) {
+                document.getElementById('loading').textContent = 'Error: ' + e.message;
+            }
+        });
+
+        function renderVitals(data) {
+            document.getElementById('loading').style.display = 'none';
+            const details = data.metrics.details || {}; // This comes from my runner.js update
+
+            // LCP
+            const lcpSec = document.getElementById('lcp-section');
+            if (details.lcpElement) {
+                lcpSec.style.display = 'block';
+                document.getElementById('lcp-element-code').textContent = details.lcpElement.node?.snippet || 'N/A';
+                document.getElementById('lcp-time').textContent = data.metrics.lcp.toFixed(0) + 'ms';
+                // phases if extracted, otherwise extract from audits in future
+            }
+
+            // CLS
+            const clsSec = document.getElementById('cls-section');
+            if (details.clsShifts && details.clsShifts.length > 0) {
+                clsSec.style.display = 'block';
+                const tbody = document.getElementById('cls-tbody');
+                details.clsShifts.forEach(shift => {
+                    const row = document.createElement('tr');
+                    // shift.node might be undefined if it's not element based or structured differently
+                    // Lighthouse CLS structure varies. usually items has `score`, `startTime`, `rects`?
+                    // Actually, items have `score` and `affectedWindows`.
+                    // Wait, `layout-shifts` or `cumulative-layout-shift` details structure:
+                    // It lists the shifts.
+                    // Let's assume standard properties or robust fallback.
+                    const time = shift.startTime ? (shift.startTime).toFixed(0) + 'ms' : '-';
+                    const score = shift.score ? shift.score.toFixed(4) : '0';
+                    const nodes = (shift.impactedNodes || []).map(n => n.node?.snippet).join('<br>') || 'Unknown';
+                    
+                    row.innerHTML = `<td>${time}</td><td>${score}</td><td>${nodes}</td>`;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // TBT / Long Tasks
+            const tbtSec = document.getElementById('tbt-section');
+            if (details.longTasks && details.longTasks.length > 0) {
+                tbtSec.style.display = 'block';
+                const list = document.getElementById('long-tasks-list');
+                
+                // Sort by duration desc
+                const tasks = details.longTasks.sort((a,b) => b.duration - a.duration).slice(0, 10);
+                
+                tasks.forEach(task => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '0.5rem';
+                    div.style.padding = '0.5rem';
+                    div.style.background = 'rgba(255,100,100,0.1)';
+                    div.style.borderLeft = '3px solid red';
+                    div.innerHTML = `<strong>${task.duration.toFixed(0)}ms</strong> at ${task.startTime.toFixed(0)}ms - ${task.url || 'Script Evaluation'}`;
+                    list.appendChild(div);
+                });
+            }
+            
+            if (!details.lcpElement && (!details.clsShifts || details.clsShifts.length === 0) && (!details.longTasks || details.longTasks.length === 0)) {
+                 document.getElementById('content-area').innerHTML += '<p>No advanced details available for this test. (Test might be old or failed to extract details)</p>';
+            }
+        }
+    </script>
+</body>
+</html>
