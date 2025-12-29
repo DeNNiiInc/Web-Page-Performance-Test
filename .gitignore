@@ -218,6 +218,7 @@ SAMPLE/
 test-*.js
 test-*.json
 deploy-now.ps1
+fix-nginx.ps1
 reports/*.json
 reports/*.html
 reports/*.har.json
