@@ -141,15 +141,22 @@
                 const tbody = document.getElementById('cls-tbody');
                 details.clsShifts.forEach(shift => {
                     const row = document.createElement('tr');
-                    // shift.node might be undefined if it's not element based or structured differently
-                    // Lighthouse CLS structure varies. usually items has `score`, `startTime`, `rects`?
-                    // Actually, items have `score` and `affectedWindows`.
-                    // Wait, `layout-shifts` or `cumulative-layout-shift` details structure:
-                    // It lists the shifts.
-                    // Let's assume standard properties or robust fallback.
-                    const time = shift.startTime ? (shift.startTime).toFixed(0) + 'ms' : '-';
-                    const score = shift.score ? shift.score.toFixed(4) : '0';
-                    const nodes = (shift.impactedNodes || []).map(n => n.node?.snippet).join('<br>') || 'Unknown';
+                    
+                    // Handle different Lighthouse versions / audit structures
+                    // Sometimes it's shift.score, sometimes it's inside an object.
+                    // Usually: { score: 0.05, startTime: 1200, impactedNodes: [...] }
+                    
+                    const time = (shift.startTime !== undefined) ? (shift.startTime).toFixed(0) + 'ms' : '-';
+                    const score = (shift.score !== undefined) ? shift.score.toFixed(4) : (shift.value ? shift.value.toFixed(4) : '0');
+                    
+                    let nodes = 'Unknown';
+                    // layout-shifts audit typically uses 'items' with 'node' or 'caused shifts'
+                    // but often it's just `items` array of shifts.
+                    if (shift.impactedNodes) {
+                        nodes = shift.impactedNodes.map(n => n.node?.snippet || n.node?.selector || 'Node').join('<br>');
+                    } else if (shift.node) {
+                        nodes = shift.node.snippet || shift.node.selector || 'Node';
+                    }
                     
                     row.innerHTML = `<td>${time}</td><td>${score}</td><td>${nodes}</td>`;
                     tbody.appendChild(row);
