@@ -123,7 +123,8 @@
 
         function renderVitals(data) {
             document.getElementById('loading').style.display = 'none';
-            const details = data.metrics.details || {}; // This comes from my runner.js update
+            // Check both root details (file format) and metrics.details (DB format)
+            const details = data.details || (data.metrics && data.metrics.details) || {};
 
             // LCP
             const lcpSec = document.getElementById('lcp-section');
