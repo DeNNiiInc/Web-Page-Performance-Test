@@ -126,6 +126,13 @@ server {
     root ${REMOTE_PATH};
     index index.html;
 
+    # Serve reports directory files with proper MIME types
+    location /reports/ {
+        try_files \$uri =404;
+        add_header Content-Type application/json;
+        add_header Access-Control-Allow-Origin *;
+    }
+
     # Serve static files directly
     location / {
         try_files \$uri \$uri/ /index.html;
