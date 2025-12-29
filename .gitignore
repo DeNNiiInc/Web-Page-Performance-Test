@@ -211,3 +211,14 @@ coverage/
 SAMPLE/
 
 !reset_password.sql
+
+# ===========================================
+# TEST FILES & DEPLOYMENT SCRIPTS
+# ===========================================
+test-*.js
+test-*.json
+deploy-now.ps1
+reports/*.json
+reports/*.html
+reports/*.har.json
+reports/*.optimizations.json
